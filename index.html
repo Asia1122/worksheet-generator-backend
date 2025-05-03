@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -20,7 +20,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-    /* A4 페이지 레이아웃 */
+    /* A4 페이지 */
     .page {
       box-sizing: border-box;
       width:180mm;
@@ -31,25 +31,7 @@
       display:flex;
       flex-direction:column;
     }
-    .page-header {
-      flex:0 0 auto;
-      padding-bottom:0.5rem;
-      border-bottom:1px solid #d1d5db;
-    }
-    .title-wrap {
-      display:flex;
-      justify-content:center;
-      align-items:baseline;
-    }
-    .title-wrap h2 { font-size:16pt; font-weight:bold; margin:0; }
-    .title-wrap .code { margin-left:1rem; font-size:12pt; }
-    .info {
-      display:flex;
-      justify-content:flex-end;
-      margin-top:0.5rem;
-      font-size:10pt;
-      gap:2rem;
-    }
+    .page-header { /* … 생략 … */ }
     .page-content {
       flex:1 1 auto;
       display:grid;
@@ -58,37 +40,53 @@
       gap:4px;
       margin-top:0.5rem;
     }
+
+    /* 각 셀(높이 고정) */
     .cell {
       box-sizing:border-box;
       border:1px solid #d1d5db;
-      border-radius:0.5rem;
       display:flex;
       flex-direction:column;
       overflow:hidden;
     }
+    /* 1) 문제 영역: 셀 높이의 50% 고정 */
     .question {
-      flex:0 0 auto;
+      flex: 0 0 50%;
       padding:0.5rem;
       font-size:clamp(8pt,1.5vw,12pt);
+      line-height:1.2;
       border-bottom:1px solid #d1d5db;
+      overflow:hidden;
       margin:0;
     }
+    /* 2) 본문(보기+정답)영역: 남은 50% */
     .body-split {
-      flex:1 1 auto;
+      flex:1 1 50%;
       display:flex;
       overflow:hidden;
     }
+    /* 2a) 보기: 2열 그리드, 원문자 라벨링 */
     .options {
       flex:3;
       padding:0.5rem;
-      list-style:none;
-      margin:0;
-      font-size:clamp(6pt,1vw,10pt);
       display:grid;
       grid-template-columns:1fr 1fr;
       gap:0.25rem;
+      list-style:none;
+      margin:0;
+      font-size:clamp(6pt,1vw,10pt);
       overflow-wrap:break-word;
     }
+    .options li {
+      display:flex;
+      align-items:flex-start;
+    }
+    .options li::before {
+      content: attr(data-label);
+      margin-right:4px;
+      flex-shrink:0;
+    }
+    /* 2b) 정답: 왼쪽 경계, 위아래 2구역 */
     .answer-area {
       flex:1;
       display:grid;
@@ -96,26 +94,24 @@
       border-left:1px solid #d1d5db;
     }
     .answer-label {
-      flex:0 0 auto;
       text-align:center;
       font-size:clamp(6pt,1vw,10pt);
       padding:0.5rem;
       margin:0;
     }
     .answer-input {
-      flex:1 1 auto;
       padding:0.5rem;
     }
   </style>
 </head>
 <body class="p-6">
 
-  <!-- 1. 컨트롤 패널 -->
+  <!-- 1. 컨트롤 -->
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
       <div>
-        <label for="qtype" class="block font-medium mb-1">문항 유형</label>
+        <label for="qtype" class="block mb-1">문항 유형</label>
         <select id="qtype" class="w-full border rounded p-2">
           <option value="객관식">객관식</option>
           <option value="단답형">단답형</option>
@@ -123,7 +119,7 @@
         </select>
       </div>
       <div class="md:col-span-2">
-        <label for="topic" class="block font-medium mb-1">학습 주제</label>
+        <label for="topic" class="block mb-1">학습 주제</label>
         <select id="topic" class="w-full border rounded p-2">
           <option value="세자리 수의 덧셈">세자리 수의 덧셈</option>
           <option value="세자리 수의 나눗셈">세자리 수의 나눗셈</option>
@@ -131,16 +127,16 @@
         </select>
       </div>
       <div>
-        <label for="count" class="block font-medium mb-1">문항 수 (최대 10)</label>
-        <input id="count" type="number" value="10" min="1" max="10" class="w-full border rounded p-2" />
+        <label for="count" class="block mb-1">문항 수 (최대 10)</label>
+        <input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/>
       </div>
-      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">
         학습지 생성
       </button>
     </form>
   </div>
 
-  <!-- 2. 학습지 페이지 -->
+  <!-- 2. 학습지 -->
   <div id="worksheet" class="page">
     <div class="page-header">
       <div class="title-wrap">
@@ -153,13 +149,12 @@
         <div>이름: ______</div>
       </div>
     </div>
-    <div class="page-content" id="page-content">
-      <!-- 여기에 문제 셀 10개가 들어갑니다 -->
-    </div>
+    <div class="page-content" id="page-content"></div>
   </div>
 
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const labels = ['①','②','③','④','⑤'];
 
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
@@ -167,52 +162,51 @@
       const topic = document.getElementById('topic').value;
       const count = +document.getElementById('count').value;
 
-      // 페이지 타이틀 & 코드 초기화
+      // 헤더 타이틀 & 코드 초기화
       document.getElementById('page-title').textContent = topic;
       document.getElementById('page-code').textContent = '';
-
       const content = document.getElementById('page-content');
       content.innerHTML = '';
 
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
+          headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ topic, count, type: qtype })
         });
         if (!res.ok) throw new Error(res.status);
         const { worksheet_code, questions } = await res.json();
 
-        // 코드 표시
         document.getElementById('page-code').textContent = worksheet_code;
 
         questions.forEach(q => {
           const cell = document.createElement('div');
           cell.className = 'cell';
 
-          // 문제
+          // 1) 문제 (50%)
           const h = document.createElement('div');
           h.className = 'question';
           h.textContent = `(${q.number}) ${q.stem}`;
           cell.append(h);
 
-          // 본문 분할
+          // 2) 본문 (50%)
           const b = document.createElement('div');
           b.className = 'body-split';
 
-          // 보기
+          // 2a) 보기 (70% 폭, 2열)
           const opts = document.createElement('ul');
           opts.className = 'options';
           if (q.options) {
-            q.options.forEach(o => {
+            q.options.forEach((o,i) => {
               const li = document.createElement('li');
+              li.setAttribute('data-label', labels[i]);
               li.textContent = o;
               opts.append(li);
             });
           }
           b.append(opts);
 
-          // 정답
+          // 2b) 정답 (30% 폭, 상하 분리)
           const a = document.createElement('div');
           a.className = 'answer-area';
           const al = document.createElement('div');
