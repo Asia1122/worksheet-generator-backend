@@ -31,7 +31,29 @@
       display:flex;
       flex-direction:column;
     }
-    .page-header { /* … 생략 … */ }
+    .page-header { flex:0 0 auto; }
+    .title-wrap {
+      display:flex;
+      justify-content:center;
+      align-items:baseline;
+    }
+    .title-wrap h2 {
+      font-size: 18pt;
+      font-weight: bold;
+      margin:0;
+    }
+    .title-wrap .code {
+      margin-left:1rem;
+      font-size:12pt;
+      font-weight: normal;
+    }
+    .info {
+      display:flex;
+      justify-content:flex-end;
+      margin-top:0.25rem;
+      font-size:10pt;
+      gap:1.5rem;
+    }
     .page-content {
       flex:1 1 auto;
       display:grid;
@@ -41,7 +63,16 @@
       margin-top:0.5rem;
     }
 
-    /* 각 셀(높이 고정) */
+    /* 로딩 메시지 */
+    .loading {
+      grid-column: 1/ -1;
+      text-align: center;
+      font-size: 12pt;
+      color: #555;
+      padding-top: 2rem;
+    }
+
+    /* 각 셀(절대 고정) */
     .cell {
       box-sizing:border-box;
       border:1px solid #d1d5db;
@@ -65,7 +96,7 @@
       display:flex;
       overflow:hidden;
     }
-    /* 2a) 보기: 2열 그리드, 원문자 라벨링 */
+    /* 2a) 보기: 70% 폭, 2열 */
     .options {
       flex:3;
       padding:0.5rem;
@@ -86,7 +117,7 @@
       margin-right:4px;
       flex-shrink:0;
     }
-    /* 2b) 정답: 왼쪽 경계, 위아래 2구역 */
+    /* 2b) 정답: 30% 폭, 상/하 분할 */
     .answer-area {
       flex:1;
       display:grid;
@@ -98,6 +129,7 @@
       font-size:clamp(6pt,1vw,10pt);
       padding:0.5rem;
       margin:0;
+      border-bottom:1px solid #d1d5db;
     }
     .answer-input {
       padding:0.5rem;
@@ -127,17 +159,15 @@
         </select>
       </div>
       <div>
-        <label for="count" class="block mb-1">문항 수 (최대 10)</label>
+        <label for="count" class="block mb-1">문항 수 (1–10)</label>
         <input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/>
       </div>
-      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">
-        학습지 생성
-      </button>
+      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">학습지 생성</button>
     </form>
   </div>
 
   <!-- 2. 학습지 -->
-  <div id="worksheet" class="page">
+  <div class="page">
     <div class="page-header">
       <div class="title-wrap">
         <h2 id="page-title">학습지</h2>
@@ -149,7 +179,9 @@
         <div>이름: ______</div>
       </div>
     </div>
-    <div class="page-content" id="page-content"></div>
+    <div class="page-content" id="page-content">
+      <div class="loading" id="loading">문제 생성 중입니다…</div>
+    </div>
   </div>
 
   <script>
@@ -165,19 +197,23 @@
       // 헤더 타이틀 & 코드 초기화
       document.getElementById('page-title').textContent = topic;
       document.getElementById('page-code').textContent = '';
+
       const content = document.getElementById('page-content');
-      content.innerHTML = '';
+      // 로딩 표시
+      content.innerHTML = `<div class="loading">문제 생성 중입니다…</div>`;
 
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
-          headers:{'Content-Type':'application/json'},
+          headers:{ 'Content-Type':'application/json' },
           body: JSON.stringify({ topic, count, type: qtype })
         });
         if (!res.ok) throw new Error(res.status);
         const { worksheet_code, questions } = await res.json();
 
+        // 페이지 재구성
         document.getElementById('page-code').textContent = worksheet_code;
+        content.innerHTML = '';
 
         questions.forEach(q => {
           const cell = document.createElement('div');
@@ -187,13 +223,15 @@
           const h = document.createElement('div');
           h.className = 'question';
           h.textContent = `(${q.number}) ${q.stem}`;
+          // 길이 >70자면 폰트 10pt로 축소
+          if (q.stem.length > 70) h.style.fontSize = '10pt';
           cell.append(h);
 
           // 2) 본문 (50%)
           const b = document.createElement('div');
           b.className = 'body-split';
 
-          // 2a) 보기 (70% 폭, 2열)
+          // 2a) 보기 (2열)
           const opts = document.createElement('ul');
           opts.className = 'options';
           if (q.options) {
@@ -206,7 +244,7 @@
           }
           b.append(opts);
 
-          // 2b) 정답 (30% 폭, 상하 분리)
+          // 2b) 정답 (상/하 분할)
           const a = document.createElement('div');
           a.className = 'answer-area';
           const al = document.createElement('div');
