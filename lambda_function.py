@@ -11,42 +11,31 @@ TABLE_NAME = os.getenv('DYNAMODB_TABLE')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(TABLE_NAME)
 
- def call_openai(count, level, topic):
-     conn = http.client.HTTPSConnection("api.openai.com")
-     prompt = (
-         f"Generate {count} multiple-choice questions for {level}학년 "
-         f"on the topic '{topic}'. "
-         "Return a JSON array of objects: {number, stem, options:list, answerIndex}."
-     )
-     payload = json.dumps({
-         "model": "gpt-3.5-turbo",
-         "messages": [
-             {"role": "system", "content": "You are a helpful teacher."},
-             {"role": "user",   "content": prompt}
-         ],
-         "temperature": 0.7
-     })
-     headers = {
-         'Content-Type': 'application/json',
-         'Authorization': f'Bearer {OPENAI_KEY}'
-     }
-     conn.request("POST", "/v1/chat/completions", payload, headers)
--    res = conn.getresponse()
--    text = res.read().decode()
--    content = json.loads(text)["choices"][0]["message"]["content"]
--    return json.loads(content)
-+    res = conn.getresponse()
-+    body = res.read().decode()
-+    # HTTP status 체크
-+    if res.status != 200:
-+        # 로그에 전체 에러 바디를 찍고 예외로 처리
-+        print(f"OpenAI API error {res.status}: {body}")
-+        raise Exception(f"OpenAI API responded {res.status}")
-+    # 정상 JSON 파싱
-+    resp = json.loads(body)
-+    content = resp["choices"][0]["message"]["content"]
-+    return json.loads(content)
+def call_openai(count, level, topic):
+    conn = http.client.HTTPSConnection("api.openai.com")
+    prompt = ( … )
+    payload = json.dumps({ … })
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {OPENAI_KEY}'
+    }
+    conn.request("POST", "/v1/chat/completions", payload, headers)
 
+    # 응답 받기
+    res = conn.getresponse()
+    body = res.read().decode()
+
+    # ← 여기부터 상태 체크
+    if res.status != 200:
+        # 상태 코드가 200이 아니면 에러 로그를 찍고 예외 발생
+        print(f"OpenAI API error {res.status}: {body}")
+        raise Exception(f"OpenAI API responded {res.status}")
+    # ← 상태 체크 끝
+
+    # 정상 응답인 경우 JSON 파싱
+    resp = json.loads(body)
+    content = resp["choices"][0]["message"]["content"]
+    return json.loads(content)
 
 def lambda_handler(event, context):
     try:
