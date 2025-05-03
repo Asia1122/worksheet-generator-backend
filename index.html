@@ -3,21 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>학습지 생성기 v1.1</title>
+  <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 인쇄용 A4 설정 */
     @page { size: A4 portrait; margin: 15mm; }
     @media print { #controls { display: none; } }
     body { background: #F3F4F6; }
-    .page { box-sizing: border-box; width: 180mm; height: 267mm; padding: 10mm; background: #fff; margin: auto; }
-    .cell { border: 1px solid #d1d5db; border-radius: 0.5rem; display: flex; flex-direction: column; }
-    .question { padding: 0.5rem; font-size: 12pt; border-bottom: 1px solid #d1d5db; }
-    .body-split { flex: 1; display: flex; }
-    .options { flex: 3; padding: 0.5rem; list-style: none; margin: 0; font-size: 10pt; }
-    .options li { margin-bottom: 0.25rem; }
-    .answer-area { flex: 1; padding: 0.5rem; border-left: 1px solid #d1d5db; font-size: 10pt; display: flex; align-items: center; justify-content: center; }
-    .answer-area span { border-bottom: 1px solid #000; padding: 0 1rem; }
+
+    .page {
+      box-sizing: border-box;
+      width: 180mm;
+      height: 267mm;
+      padding: 10mm;
+      background: #fff;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .page-header {
+      flex: 0 0 auto;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #d1d5db;
+    }
+    .page-header .title-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+    }
+    .page-header h2 {
+      font-size: 16pt;
+      font-weight: bold;
+      margin: 0;
+    }
+    .page-header .code {
+      margin-left: 1rem;
+      font-size: 12pt;
+    }
+    .page-header .info {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+      font-size: 10pt;
+      gap: 2rem;
+    }
+
+    .page-content {
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 4px;
+      margin-top: 0.5rem;
+    }
+
+    .cell {
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .question {
+      flex: 0 0 auto;
+      padding: 0.5rem;
+      font-size: clamp(10pt, 1.5vw, 14pt);
+      border-bottom: 1px solid #d1d5db;
+      margin: 0;
+    }
+    .body-split {
+      flex: 1 1 auto;
+      display: flex;
+    }
+    .options {
+      flex: 3;
+      padding: 0.5rem;
+      list-style: none;
+      margin: 0;
+      font-size: clamp(8pt, 1vw, 10pt);
+      overflow-wrap: break-word;
+    }
+    .options li {
+      margin-bottom: 0.25rem;
+    }
+    .answer-area {
+      flex: 1;
+      padding: 0.5rem;
+      border-left: 1px solid #d1d5db;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      font-size: clamp(8pt, 1vw, 10pt);
+    }
+    .answer-area span {
+      font-weight: bold;
+      margin: 0;
+    }
   </style>
 </head>
 <body class="p-6">
@@ -53,7 +134,7 @@
   </div>
 
   <!-- 출력 영역 -->
-  <div id="worksheet" class="mt-8 grid grid-cols-1 gap-4"></div>
+  <div id="worksheet" class="mt-8"></div>
 
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
@@ -85,32 +166,37 @@
 
     function renderWorksheet(code, qs, topic, level) {
       let html = `
-      <div class="page text-[10pt] leading-tight">
-        <header class="mb-4">
-          <div class="flex justify-center items-baseline">
-            <h2 class="text-2xl font-bold">${topic}</h2>
-            <span class="ml-4 text-lg">코드: ${code}</span>
+      <div class="page">
+        <header class="page-header">
+          <div class="title-wrap">
+            <h2>${topic}</h2>
+            <div class="code">코드: ${code}</div>
           </div>
-          <div class="flex justify-end mt-2 text-[12pt] space-x-6">
-            <span>학년: ${level}</span>
-            <span>번: __</span>
-            <span>이름: ______________</span>
+          <div class="info">
+            <div>학년: ${level}</div>
+            <div>번: __</div>
+            <div>이름: __________</div>
           </div>
         </header>
-        <section class="grid grid-cols-2 grid-rows-5 gap-2">`;
+        <div class="page-content">
+      `;
       qs.forEach(q => {
         html += `
           <div class="cell">
             <div class="question">${q.number}. ${q.stem}</div>
             <div class="body-split">
-              <ul class="options">${q.options.map((opt, i) => `<li>${labels[i]} ${opt}</li>`).join('')}</ul>
+              <ul class="options">
+                ${q.options.map((opt,i) => `<li>${labels[i]} ${opt}</li>`).join('')}
+              </ul>
               <div class="answer-area"><span>정답</span></div>
             </div>
-          </div>`;
+          </div>
+        `;
       });
       html += `
-        </section>
-      </div>`;
+        </div>
+      </div>
+      `;
       return html;
     }
   </script>
