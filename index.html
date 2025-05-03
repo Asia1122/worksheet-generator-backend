@@ -41,29 +41,24 @@
       border-bottom: 1px solid #d1d5db;
     }
     .title-wrap {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
+      text-align: center;
     }
     .title-wrap h2 {
-      flex: 1;
       margin: 0;
       font-size: 18pt;
       font-weight: bold;
-      text-align: center;
     }
-    .title-wrap .code {
-      flex: 0 0 auto;
-      margin-left: 1rem;
+    .code {
+      margin-top: 0.25rem;
       font-size: 14pt;
-      text-align: right;
+      text-align: left;
       font-weight: normal;
     }
     .info {
       display: flex;
       justify-content: flex-end;
-      margin-top: 0.25rem;
-      font-size: 10pt;
+      margin-top: 0.5rem;
+      font-size: 14pt;
       gap: 2rem;
     }
     .info div {
@@ -88,7 +83,6 @@
       flex-direction:column;
       overflow:hidden;
     }
-    /* 1) 문제 영역: 50% */
     .question {
       flex:0 0 50%;
       padding:0.5rem;
@@ -98,13 +92,11 @@
       overflow:hidden;
       margin:0;
     }
-    /* 2) 본문 영역 */
     .body-split {
-      flex:1 1 50%;
+      flex:1;
       display:flex;
       overflow:hidden;
     }
-    /* 보기 */
     .options {
       flex:3;
       padding:0.5rem;
@@ -125,7 +117,6 @@
       margin-right:4px;
       flex-shrink:0;
     }
-    /* 정답 */
     .answer-area {
       flex:1;
       display:grid;
@@ -142,20 +133,11 @@
     .answer-input {
       padding:0.5rem;
     }
-
-    /* 로딩 메시지 */
-    .loading {
-      grid-column:1 / -1;
-      text-align:center;
-      font-size:12pt;
-      color:#555;
-      padding-top:2rem;
-    }
   </style>
 </head>
 <body class="p-6">
 
-  <!-- 1. 컨트롤 패널 -->
+  <!-- 컨트롤 패널 -->
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
@@ -187,21 +169,19 @@
     </form>
   </div>
 
-  <!-- 2. 학습지 페이지 -->
+  <!-- 학습지 페이지 -->
   <div class="page">
     <div class="page-header">
       <div class="title-wrap">
         <h2 id="page-title">학습지</h2>
-        <div class="code" id="page-code"></div>
       </div>
+      <div class="code" id="page-code"></div>
       <div class="info">
-        <div>번호:     </div>
-        <div>이름:     </div>
+        <div>번호:        </div>
+        <div>이름:         </div>
       </div>
     </div>
-    <div class="page-content" id="page-content">
-      <div class="loading">문제 생성 중입니다…</div>
-    </div>
+    <div class="page-content" id="page-content"></div>
   </div>
 
   <script>
