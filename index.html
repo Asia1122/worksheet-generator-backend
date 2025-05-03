@@ -3,26 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>학습지 생성기v1.2</title>
+  <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @page { size: A4 portrait; margin: 15mm; }
     @media print { #controls { display: none; } }
-    body { background: #F3F4F6; margin:0; padding:0; }
-    .page { box-sizing: border-box; width:180mm; height:267mm; padding:10mm; background:#fff; margin:auto; display:flex; flex-direction:column; }
-    .page-header { flex:0 0 auto; padding-bottom:0.5rem; border-bottom:1px solid #d1d5db; }
+    body { margin:0; padding:0; background:#F3F4F6; }
+    .page {
+      box-sizing:border-box;
+      width:180mm;
+      height:267mm;
+      padding:10mm;
+      background:#fff;
+      margin:auto;
+      display:flex;
+      flex-direction:column;
+    }
+    .page-header { flex:0 0 auto; border-bottom:1px solid #d1d5db; padding-bottom:0.5rem; }
     .title-wrap { display:flex; justify-content:center; align-items:baseline; }
     .title-wrap h2 { font-size:16pt; font-weight:bold; margin:0; }
     .title-wrap .code { margin-left:1rem; font-size:12pt; }
     .info { display:flex; justify-content:flex-end; margin-top:0.5rem; font-size:10pt; gap:2rem; }
-    .page-content { flex:1 1 auto; display:grid; grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(5,1fr); gap:4px; margin-top:0.5rem; }
-    .cell { box-sizing:border-box; border:1px solid #d1d5db; border-radius:0.5rem; display:flex; flex-direction:column; overflow:hidden; }
-    .question { flex:0 0 auto; padding:0.5rem; font-size:clamp(8pt,1.5vw,12pt); border-bottom:1px solid #d1d5db; margin:0; }
+    .page-content {
+      flex:1 1 auto;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:repeat(5,1fr);
+      gap:4px;
+      margin-top:0.5rem;
+    }
+    .cell {
+      box-sizing:border-box;
+      border:1px solid #d1d5db;
+      border-radius:0.5rem;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .question {
+      flex:0 0 auto;
+      padding:0.5rem;
+      font-size:12pt;
+      line-height:1.2;
+      border-bottom:1px solid #d1d5db;
+      margin:0;
+      overflow:hidden;
+    }
     .body-split { flex:1 1 auto; display:flex; }
-    .options { flex:3; padding:0.5rem; list-style:none; margin:0; font-size:clamp(6pt,1vw,10pt); overflow-wrap:break-word; }
+    .options {
+      flex:3;
+      padding:0.5rem;
+      list-style:none;
+      margin:0;
+      font-size:10pt;
+      overflow:hidden;
+    }
     .options li { margin-bottom:0.25rem; }
-    .answer-area { flex:1; display:flex; flex-direction:column; border-left:1px solid #d1d5db; }
-    .answer-label { flex:0 0 auto; text-align:center; font-size:clamp(6pt,1vw,10pt); padding:0.5rem; margin:0; }
+    .answer-area {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      border-left:1px solid #d1d5db;
+    }
+    .answer-label {
+      flex:0 0 auto;
+      text-align:center;
+      font-size:10pt;
+      padding:0.5rem;
+      margin:0;
+    }
     .answer-input { flex:1 1 auto; padding:0.5rem; }
   </style>
 </head>
@@ -57,6 +106,7 @@
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
     const labels = ['①','②','③','④','⑤'];
+
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
       const type = document.getElementById('qtype').value;
@@ -72,34 +122,51 @@
         });
         if(!res.ok) throw new Error(res.status+res.statusText);
         const { worksheet_code, questions } = await res.json();
-        container.innerHTML = renderWorksheet(worksheet_code,questions,topic);
+        container.innerHTML = renderWorksheet(worksheet_code, questions, topic);
+        adjustFontSizes();
       } catch(err) {
         console.error(err);
         container.innerHTML = `<p class="text-red-600 text-center">문제 생성 실패: ${err.message}</p>`;
       }
     });
+
     function renderWorksheet(code, qs, topic) {
-      let html = `
-      <div class="page">
-        <header class="page-header">
-          <div class="title-wrap"><h2>${topic}</h2><div class="code">코드: ${code}</div></div>
-          <div class="info"><div>학년: 초등학생</div><div>번: __</div><div>이름: __________</div></div>
-        </header>
-        <div class="page-content">`;
-      qs.forEach((q,i)=>{
-        html+=`
-          <div class="cell">
-            <div class="question">${i+1}. ${q.stem}</div>
-            <div class="body-split">
-              <ul class="options">${q.options? q.options.map((opt,j)=>`<li>${labels[j]} ${opt}</li>`).join('') : ''}</ul>
-              <div class="answer-area"><div class="answer-label">정답</div><div class="answer-input"></div></div>
-            </div>
-          </div>`;
+      let html = `<div class="page">` +
+        `<header class="page-header">` +
+          `<div class="title-wrap"><h2>${topic}</h2><div class="code">코드: ${code}</div></div>` +
+          `<div class="info"><div>학년: 초등학생</div><div>번: __</div><div>이름: __________</div></div>` +
+        `</header><div class="page-content">`;
+      qs.forEach((q,i) => {
+        html += `<div class="cell">` +
+                  `<div class="question">${i+1}. ${q.stem}</div>` +
+                  `<div class="body-split">` +
+                    `<ul class="options">` +
+                      `${q.options? q.options.map((opt,j)=>`<li>${opt}</li>`).join('') : ''}` +
+                    `</ul>` +
+                    `<div class="answer-area">` +
+                      `<div class="answer-label">정답</div>` +
+                      `<div class="answer-input"></div>` +
+                    `</div>` +
+                  `</div>` +
+                `</div>`;
       });
-      html+=`
-        </div>
-      </div>`;
+      html += `</div></div>`;
       return html;
+    }
+
+    function adjustFontSizes() {
+      document.querySelectorAll('.cell').forEach(cell => {
+        const q = cell.querySelector('.question');
+        let fq = parseFloat(window.getComputedStyle(q).fontSize);
+        while(q.scrollHeight > q.clientHeight && fq > 6) {
+          fq -= 1; q.style.fontSize = fq + 'pt';
+        }
+        const opts = cell.querySelector('.options');
+        let fo = parseFloat(window.getComputedStyle(opts).fontSize);
+        while(opts.scrollHeight > opts.clientHeight && fo > 6) {
+          fo -= 1; opts.style.fontSize = fo + 'pt';
+        }
+      });
     }
   </script>
 </body>
