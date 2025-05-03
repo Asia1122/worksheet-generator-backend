@@ -11,39 +11,48 @@ TABLE_NAME = os.getenv('DYNAMODB_TABLE')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(TABLE_NAME)
 
-def call_openai(count, level, topic):
-    conn = http.client.HTTPSConnection("api.openai.com")
+ def call_openai(count, level, topic):
+     conn = http.client.HTTPSConnection("api.openai.com")
+     prompt = (
+         f"Generate {count} multiple-choice questions for {level}학년 "
+         f"on the topic '{topic}'. "
+         "Return a JSON array of objects with keys: number, stem, options (list), answerIndex."
+     )
+     payload = json.dumps({
+         "model": "gpt-3.5-turbo",
+         "messages": [
+             {"role": "system", "content": "You are a helpful teacher."},
+             {"role": "user",   "content": prompt}
+         ],
+         "temperature": 0.7
+     })
+     headers = {
+         'Content-Type': 'application/json',
+         'Authorization': f'Bearer {OPENAI_KEY}'
+     }
+     conn.request("POST", "/v1/chat/completions", payload, headers)
+     res = conn.getresponse()
+     body = res.read().decode()
+     if res.status != 200:
+         print(f"OpenAI API error {res.status}: {body}")
+         raise Exception(f"OpenAI API responded {res.status}")
 
-    # 잘못된 … 문자를 제거하고 실제 텍스트로 교체
-    prompt = (
-        f"Generate {count} multiple-choice questions for {level}학년 "
-        f"on the topic '{topic}'. "
-        "Return a JSON array of objects with keys: number, stem, options (list), answerIndex."
-    )
+     # ① 선택: 원시 응답 콘솔에 찍어 보기
+     print("Raw content:", body)
 
-    payload = json.dumps({
-        "model": "gpt-3.5-turbo",
-        "messages": [
-            {"role": "system", "content": "You are a helpful teacher."},
-            {"role": "user",   "content": prompt}
-        ],
-        "temperature": 0.7
-    })
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {OPENAI_KEY}'
-    }
+     resp = json.loads(body)
+     raw = resp["choices"][0]["message"]["content"]
 
-    conn.request("POST", "/v1/chat/completions", payload, headers)
-    res = conn.getresponse()
-    body = res.read().decode()
++    # ② JSON 만 추출
++    start = raw.find('[')
++    end   = raw.rfind(']')
++    if start == -1 or end == -1:
++        print("JSON parsing error, content:", raw)
++        raise Exception("Could not find JSON array in response")
++    json_str = raw[start:end+1]
 
-    if res.status != 200:
-        print(f"OpenAI API error {res.status}: {body}")
-        raise Exception(f"OpenAI API responded {res.status}")
-    resp = json.loads(body)
-    content = resp["choices"][0]["message"]["content"]
-    return json.loads(content)
+     return json.loads(json_str)
+
 
 
 def lambda_handler(event, context):
