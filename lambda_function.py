@@ -68,7 +68,7 @@ def lambda_handler(event, context):
                     'question_number': q['number'],
                     'question':        q['stem'],
                     'options':         q['options'],
-                    'answerIndex':     q['answerIndex']
+                    'answerIndex':     q['answerIndex'] +1
                 })
 
         return {
