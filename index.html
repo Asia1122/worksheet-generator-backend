@@ -1,112 +1,29 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>학습지 생성기 v1.1</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>학습지 생성기v1.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 인쇄용 A4 설정 */
     @page { size: A4 portrait; margin: 15mm; }
     @media print { #controls { display: none; } }
     body { background: #F3F4F6; margin:0; padding:0; }
-
-    .page {
-      box-sizing: border-box;
-      width: 180mm;
-      height: 267mm;
-      padding: 10mm;
-      background: #fff;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .page-header {
-      flex: 0 0 auto;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid #d1d5db;
-    }
-    .title-wrap {
-      display: flex;
-      justify-content: center;
-      align-items: baseline;
-    }
-    .title-wrap h2 {
-      font-size: 16pt;
-      font-weight: bold;
-      margin: 0;
-    }
-    .title-wrap .code {
-      margin-left: 1rem;
-      font-size: 12pt;
-    }
-    .info {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 0.5rem;
-      font-size: 10pt;
-      gap: 2rem;
-    }
-
-    .page-content {
-      flex: 1 1 auto;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 4px;
-      margin-top: 0.5rem;
-    }
-
-    .cell {
-      box-sizing: border-box;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-    }
-    .question {
-      flex: 0 0 auto;
-      padding: 0.5rem;
-      font-size: clamp(8pt, 1.5vw, 12pt);
-      border-bottom: 1px solid #d1d5db;
-      margin: 0;
-    }
-    .body-split {
-      flex: 1 1 auto;
-      display: flex;
-    }
-    .options {
-      flex: 3;
-      padding: 0.5rem;
-      list-style: none;
-      margin: 0;
-      font-size: clamp(6pt, 1vw, 10pt);
-      overflow-wrap: break-word;
-    }
-    .options li {
-      margin-bottom: 0.25rem;
-    }
-    .answer-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      border-left: 1px solid #d1d5db;
-    }
-    .answer-label {
-      flex: 0 0 auto;
-      text-align: center;
-      font-size: clamp(6pt, 1vw, 10pt);
-      padding: 0.5rem;
-      border-bottom: 1px solid #d1d5db;
-      margin: 0;
-    }
-    .answer-input {
-      flex: 1 1 auto;
-      padding: 0.5rem;
-    }
+    .page { box-sizing: border-box; width:180mm; height:267mm; padding:10mm; background:#fff; margin:auto; display:flex; flex-direction:column; }
+    .page-header { flex:0 0 auto; padding-bottom:0.5rem; border-bottom:1px solid #d1d5db; }
+    .title-wrap { display:flex; justify-content:center; align-items:baseline; }
+    .title-wrap h2 { font-size:16pt; font-weight:bold; margin:0; }
+    .title-wrap .code { margin-left:1rem; font-size:12pt; }
+    .info { display:flex; justify-content:flex-end; margin-top:0.5rem; font-size:10pt; gap:2rem; }
+    .page-content { flex:1 1 auto; display:grid; grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(5,1fr); gap:4px; margin-top:0.5rem; }
+    .cell { box-sizing:border-box; border:1px solid #d1d5db; border-radius:0.5rem; display:flex; flex-direction:column; overflow:hidden; }
+    .question { flex:0 0 auto; padding:0.5rem; font-size:clamp(8pt,1.5vw,12pt); border-bottom:1px solid #d1d5db; margin:0; }
+    .body-split { flex:1 1 auto; display:flex; }
+    .options { flex:3; padding:0.5rem; list-style:none; margin:0; font-size:clamp(6pt,1vw,10pt); overflow-wrap:break-word; }
+    .options li { margin-bottom:0.25rem; }
+    .answer-area { flex:1; display:flex; flex-direction:column; border-left:1px solid #d1d5db; }
+    .answer-label { flex:0 0 auto; text-align:center; font-size:clamp(6pt,1vw,10pt); padding:0.5rem; margin:0; }
+    .answer-input { flex:1 1 auto; padding:0.5rem; }
   </style>
 </head>
 <body class="p-6">
@@ -114,14 +31,11 @@
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
       <div>
-        <label for="level" class="block font-medium mb-1">학년</label>
-        <select id="level" class="w-full border rounded p-2">
-          <option value="1">1학년</option>
-          <option value="2">2학년</option>
-          <option value="3">3학년</option>
-          <option value="4">4학년</option>
-          <option value="5">5학년</option>
-          <option value="6">6학년</option>
+        <label for="qtype" class="block font-medium mb-1">문항 유형</label>
+        <select id="qtype" class="w-full border rounded p-2">
+          <option value="객관식">객관식</option>
+          <option value="단답형">단답형</option>
+          <option value="반반">반반</option>
         </select>
       </div>
       <div class="md:col-span-2">
@@ -145,50 +59,44 @@
     const labels = ['①','②','③','④','⑤'];
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
-      const level = document.getElementById('level').value;
+      const type = document.getElementById('qtype').value;
       const topic = document.getElementById('topic').value;
-      const count = Math.min(+document.getElementById('count').value, 10);
+      const count = Math.min(+document.getElementById('count').value,10);
       const container = document.getElementById('worksheet');
       container.innerHTML = '<p class="text-center">문제를 생성 중입니다…</p>';
       try {
-        const res = await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ level, topic, count }) });
-        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+        const res = await fetch(API_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ type, topic, count })
+        });
+        if(!res.ok) throw new Error(res.status+res.statusText);
         const { worksheet_code, questions } = await res.json();
-        container.innerHTML = renderWorksheet(worksheet_code, questions, topic, level);
+        container.innerHTML = renderWorksheet(worksheet_code,questions,topic);
       } catch(err) {
         console.error(err);
         container.innerHTML = `<p class="text-red-600 text-center">문제 생성 실패: ${err.message}</p>`;
       }
     });
-    function renderWorksheet(code, qs, topic, level) {
+    function renderWorksheet(code, qs, topic) {
       let html = `
       <div class="page">
         <header class="page-header">
-          <div class="title-wrap">
-            <h2>${topic}</h2>
-            <div class="code">코드: ${code}</div>
-          </div>
-          <div class="info">
-            <div>학년: ${level}</div>
-            <div>번: __</div>
-            <div>이름: __________</div>
-          </div>
+          <div class="title-wrap"><h2>${topic}</h2><div class="code">코드: ${code}</div></div>
+          <div class="info"><div>학년: 초등학생</div><div>번: __</div><div>이름: __________</div></div>
         </header>
         <div class="page-content">`;
-      qs.forEach(q => {
-        html += `
+      qs.forEach((q,i)=>{
+        html+=`
           <div class="cell">
-            <div class="question">${q.number}. ${q.stem}</div>
+            <div class="question">${i+1}. ${q.stem}</div>
             <div class="body-split">
-              <ul class="options">${q.options.map((opt,i) => `<li>${labels[i]} ${opt}</li>`).join('')}</ul>
-              <div class="answer-area">
-                <div class="answer-label">정답</div>
-                <div class="answer-input"></div>
-              </div>
+              <ul class="options">${q.options? q.options.map((opt,j)=>`<li>${labels[j]} ${opt}</li>`).join('') : ''}</ul>
+              <div class="answer-area"><div class="answer-label">정답</div><div class="answer-input"></div></div>
             </div>
           </div>`;
       });
-      html += `
+      html+=`
         </div>
       </div>`;
       return html;
