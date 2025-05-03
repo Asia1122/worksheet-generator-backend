@@ -20,7 +20,7 @@ def call_openai(count, question_type, topic):
             "Make half multiple-choice with 4 options each (no labels) "
             "and half short-answer questions. "
         )
-    prompt += "Include a good mix of word problems, pure calculation problems like '342+542 = ?', and sentence-form questions. "
+    prompt += "Include a mix of sentence-form problems, simple arithmetic, and formula-only problems such as '354+223 = ?'. "
     prompt += "Return a JSON array of objects with keys: number (int), stem (string), "
     prompt += "options (array of strings, if any), answerIndex (0-based) or answer (string) for short answers."
 

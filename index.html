@@ -8,8 +8,8 @@
   <style>
     @page { size: A4 portrait; margin: 10mm 5mm 5mm 5mm; }
     @media print { #controls { display: none; } }
-    body { background: #F3F4F6; margin: 0; padding: 0; }
-  
+    body { background: #F3F4F6; margin:0; padding:0; }
+
     /* 컨트롤 패널 */
     #controls {
       max-width: 800px;
@@ -19,101 +19,97 @@
       border-radius: 0.5rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-  
+
     /* A4 페이지 */
     .page {
       box-sizing: border-box;
-      width: 180mm;
-      height: 267mm;
-      padding: 5mm;
-      background: #fff;
-      margin: 1rem auto;
-      display: flex;
-      flex-direction: column;
+      width:180mm;
+      height:267mm;
+      padding:5mm;
+      background:#fff;
+      margin:1rem auto;
+      display:flex;
+      flex-direction:column;
     }
     .page-header { flex: 0 0 auto; }
-    .title-wrap { display: flex; justify-content: center; align-items: baseline; }
-    .title-wrap h2 { font-size: 18pt; font-weight: bold; margin: 0; }
-    .title-wrap .code { margin-left: 1rem; font-size: 12pt; font-weight: normal; }
-    .info { display: flex; justify-content: flex-end; margin-top: 0.25rem; font-size: 10pt; gap: 1.5rem; }
-  
+    .title-wrap {
+      display:flex; justify-content:center; align-items:baseline;
+    }
+    .title-wrap h2 {
+      font-size: 18pt; font-weight: bold; margin:0;
+    }
+    .title-wrap .code {
+      margin-left:1rem; font-size:14pt; font-weight: normal;
+    }
+    .info {
+      display:flex; justify-content:flex-end;
+      margin-top:0.25rem; font-size:10pt; gap:1.5rem;
+    }
+    /* 학년 정보는 지우고, 밑줄도 제거 */
+    .info div { white-space: pre; }
+
     .page-content {
-      flex: 1 1 auto;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 2px;
-      margin-top: 0.5rem;
+      flex:1 1 auto;
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      grid-template-rows:repeat(5,1fr);
+      gap:2px;
+      margin-top:0.5rem;
     }
-  
-    /* 셀 구조 */
+
+    /* 각 셀 */
     .cell {
-      box-sizing: border-box;
-      border: 1px solid #d1d5db;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      box-sizing:border-box;
+      border:1px solid #d1d5db;
+      display:flex; flex-direction:column; overflow:hidden;
     }
-    /* 문제 영역: 셀 높이의 50% 고정 */
+    /* 1) 문제 영역: 셀 높이의 50% 고정 */
     .question {
-      flex: 0 0 50%;
-      padding: 0.5rem;
-      font-size: clamp(8pt, 1.5vw, 12pt);
-      line-height: 1.2;
-      border-bottom: 1px solid #d1d5db;
-      overflow: hidden;
-      margin: 0;
+      flex:0 0 50%;
+      padding:0.5rem;
+      font-size:clamp(8pt,1.5vw,12pt);
+      line-height:1.2;
+      border-bottom:1px solid #d1d5db;
+      overflow:hidden; margin:0;
     }
-    /* 본문 영역: 남은 50% */
+    /* 2) 본문(보기+정답)영역: 남은 50% */
     .body-split {
-      flex: 1 1 50%;
-      display: flex;
-      overflow: hidden;
+      flex:1 1 50%; display:flex; overflow:hidden;
     }
-    /* 보기: 70% 폭, 2열 */
+    /* 2a) 보기: 70% 폭, 2열, 원문자 라벨링 */
     .options {
-      flex: 3;
-      padding: 0.5rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.25rem;
-      list-style: none;
-      margin: 0;
-      font-size: clamp(6pt, 1vw, 10pt);
-      overflow-wrap: break-word;
+      flex:3; padding:0.5rem;
+      display:grid; grid-template-columns:1fr 1fr; gap:0.25rem;
+      list-style:none; margin:0;
+      font-size:clamp(6pt,1vw,10pt);
+      overflow-wrap:break-word;
     }
     .options li {
-      display: flex;
-      align-items: flex-start;
+      display:flex; align-items:flex-start;
     }
     .options li::before {
       content: attr(data-label);
-      margin-right: 4px;
-      flex-shrink: 0;
+      margin-right:4px; flex-shrink:0;
     }
-    /* 정답: 30% 폭, 상/하 분할 */
+    /* 2b) 정답: 30% 폭, 상/하 분할, 분할선 추가 */
     .answer-area {
-      flex: 1;
-      display: grid;
-      grid-template-rows: auto 1fr;
-      border-left: 1px solid #d1d5db;
+      flex:1; display:grid; grid-template-rows:auto 1fr;
+      border-left:1px solid #d1d5db;
     }
     .answer-label {
-      text-align: center;
-      font-size: clamp(6pt, 1vw, 10pt);
-      padding: 0.5rem;
-      margin: 0;
-      border-bottom: 1px solid #d1d5db;
+      text-align:center;
+      font-size:clamp(6pt,1vw,10pt);
+      padding:0.5rem; margin:0;
+      border-bottom:1px solid #d1d5db;
     }
     .answer-input {
-      padding: 0.5rem;
+      padding:0.5rem;
     }
   </style>
-  
 </head>
 <body class="p-6">
 
-  <!-- 1. 컨트롤 -->
+  <!-- 1. 컨트롤 패널 -->
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
@@ -135,13 +131,17 @@
       </div>
       <div>
         <label for="count" class="block mb-1">문항 수 (1–10)</label>
-        <input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/>
+        <input id="count" type="number" min="1" max="10" value="10"
+               class="w-full border rounded p-2"/>
       </div>
-      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">학습지 생성</button>
+      <button type="submit"
+              class="md:col-span-3 bg-blue-600 text-white py-2 rounded">
+        학습지 생성
+      </button>
     </form>
   </div>
 
-  <!-- 2. 학습지 -->
+  <!-- 2. 학습지 페이지 -->
   <div class="page">
     <div class="page-header">
       <div class="title-wrap">
@@ -149,14 +149,11 @@
         <div class="code" id="page-code"></div>
       </div>
       <div class="info">
-        <div>학년: 초등학생</div>
-        <div>번: ______</div>
-        <div>이름: ______</div>
+        <div>번:     </div>
+        <div>이름:    </div>
       </div>
     </div>
-    <div class="page-content" id="page-content">
-      <div class="loading" id="loading">문제 생성 중입니다…</div>
-    </div>
+    <div class="page-content" id="page-content"></div>
   </div>
 
   <script>
@@ -169,24 +166,21 @@
       const topic = document.getElementById('topic').value;
       const count = +document.getElementById('count').value;
 
-      // 헤더 타이틀 & 코드 초기화
+      // 헤더 업데이트
       document.getElementById('page-title').textContent = topic;
       document.getElementById('page-code').textContent = '';
-
       const content = document.getElementById('page-content');
-      // 로딩 표시
-      content.innerHTML = `<div class="loading">문제 생성 중입니다…</div>`;
+      content.innerHTML = '<div class="loading">문제 생성 중입니다…</div>';
 
       try {
         const res = await fetch(API_URL, {
-          method: 'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify({ topic, count, type: qtype })
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ topic, count, type: qtype })
         });
-        if (!res.ok) throw new Error(res.status);
+        if(!res.ok) throw new Error(res.status);
         const { worksheet_code, questions } = await res.json();
 
-        // 페이지 재구성
         document.getElementById('page-code').textContent = worksheet_code;
         content.innerHTML = '';
 
@@ -194,22 +188,21 @@
           const cell = document.createElement('div');
           cell.className = 'cell';
 
-          // 1) 문제 (50%)
+          // 문제 (50%)
           const h = document.createElement('div');
           h.className = 'question';
           h.textContent = `(${q.number}) ${q.stem}`;
-          // 길이 >70자면 폰트 10pt로 축소
-          if (q.stem.length > 70) h.style.fontSize = '10pt';
+          if(q.stem.length > 70) h.style.fontSize = '11pt';
           cell.append(h);
 
-          // 2) 본문 (50%)
+          // 본문 (50%)
           const b = document.createElement('div');
           b.className = 'body-split';
 
-          // 2a) 보기 (2열)
+          // 보기
           const opts = document.createElement('ul');
           opts.className = 'options';
-          if (q.options) {
+          if(q.options){
             q.options.forEach((o,i) => {
               const li = document.createElement('li');
               li.setAttribute('data-label', labels[i]);
@@ -219,7 +212,7 @@
           }
           b.append(opts);
 
-          // 2b) 정답 (상/하 분할)
+          // 정답
           const a = document.createElement('div');
           a.className = 'answer-area';
           const al = document.createElement('div');
