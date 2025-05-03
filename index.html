@@ -6,16 +6,14 @@
   <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* A4 본문: 210×297mm 중, 헤더/여백 제외 후 267mm 높이를 5등분 */
+    /* A4 사이즈의 본문 높이(약 267mm)를 고정, 두 열 × 다섯 행 그리드 */
     .page {
       width: 210mm;
       height: 267mm;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      /* 각 행의 높이를 267mm/5 = 53.4mm로 절대 고정 */
-      grid-template-rows: repeat(5, 53.4mm);
+      grid-template-rows: repeat(5, 1fr);
       gap: 4mm;
-      box-sizing: border-box;
     }
     .cell {
       position: relative;
@@ -25,42 +23,34 @@
       display: flex;
       flex-direction: column;
     }
-    /* 1) 문제 영역 (셀 상단) */
     .question {
+      /* 최대 14px, 최소 8px, 뷰포트 너비에 따라 자동 조정 */
       font-size: clamp(8px, 1.5vw, 14px);
       line-height: 1.2;
       flex: 0 0 auto;
       margin-bottom: 4px;
-      overflow: hidden;
     }
-    /* 2) 본문: 보기·정답 분할 */
     .body-split {
       display: flex;
       flex: 1 1 auto;
-      overflow: hidden;
     }
-    /* 2a) 보기: 2열 그리드 */
     .options {
       width: 70%;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2mm;
-      font-size: clamp(7px, 1.2vw, 12px);
       overflow-wrap: break-word;
+      font-size: clamp(7px, 1.2vw, 12px);
     }
-    /* 2b) 정답: 위아래 분할 */
     .answer-area {
       width: 30%;
       display: grid;
       grid-template-rows: auto 1fr;
       text-align: center;
-      overflow: hidden;
     }
     .answer-area .label {
       font-size: clamp(8px, 1.2vw, 12px);
       align-self: center;
     }
     .answer-area .input {
+      /* 입력란(빈 공간) */
       border-bottom: 1px solid #000;
       margin-top: 4px;
     }
@@ -69,9 +59,10 @@
 <body>
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const labels = ['①','②','③','④','⑤'];
   </script>
 
-  <form id="settings" style="margin-bottom:8px;">
+  <form id="settings">
     <input id="topic" placeholder="학습 주제" required />
     <input id="count" type="number" min="1" max="10" value="10" required />
     <select id="type">
@@ -85,67 +76,64 @@
   <div id="worksheet" class="page"></div>
 
   <script>
-    document.getElementById('settings').addEventListener('submit', async e => {
-      e.preventDefault();
-      const topic = document.getElementById('topic').value;
-      const count = +document.getElementById('count').value;
-      const type  = document.getElementById('type').value;
-      const container = document.getElementById('worksheet');
-      container.innerHTML = '';
+  document.getElementById('settings').addEventListener('submit', async e => {
+    e.preventDefault();
+    const topic = document.getElementById('topic').value;
+    const count = +document.getElementById('count').value;
+    const type  = document.getElementById('type').value;
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ topic, count, type })
-        });
-        if (!res.ok) throw new Error(res.status);
-        const { questions } = await res.json();
+    document.getElementById('worksheet').innerHTML = '';
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ topic, count, type })
+      });
+      if (!res.ok) throw new Error(res.status);
+      const { worksheet_code, questions } = await res.json();
 
-        questions.forEach(q => {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
+      questions.forEach(q => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
 
-          // 1) 문제
-          const qEl = document.createElement('div');
-          qEl.className = 'question';
-          qEl.textContent = `(${q.number}) ${q.stem}`;
-          cell.append(qEl);
+        const qEl = document.createElement('div');
+        qEl.className = 'question';
+        qEl.textContent = `(${q.number}) ${q.stem}`;
+        cell.append(qEl);
 
-          // 2) 본문 분할
-          const body = document.createElement('div');
-          body.className = 'body-split';
+        const body = document.createElement('div');
+        body.className = 'body-split';
 
-          // 2a) 보기
-          const opt = document.createElement('div');
-          opt.className = 'options';
-          if (q.options) {
-            q.options.forEach(o => {
-              const p = document.createElement('p');
-              p.textContent = o;
-              opt.append(p);
-            });
-          }
-          body.append(opt);
+        // 보기 영역
+        const opt = document.createElement('div');
+        opt.className = 'options';
+        if (q.options) {
+          q.options.forEach((o,i) => {
+            const p = document.createElement('p');
+            p.textContent = o; // 이미 GPT에서 번호 없이 전달
+            opt.append(p);
+          });
+        }
+        body.append(opt);
 
-          // 2b) 정답
-          const ans = document.createElement('div');
-          ans.className = 'answer-area';
-          const lbl = document.createElement('div');
-          lbl.className = 'label';
-          lbl.textContent = '정답';
-          const inp = document.createElement('div');
-          inp.className = 'input';
-          ans.append(lbl, inp);
-          body.append(ans);
+        // 정답 영역
+        const ans = document.createElement('div');
+        ans.className = 'answer-area';
+        const lbl = document.createElement('div');
+        lbl.className = 'label';
+        lbl.textContent = '정답';
+        const inp = document.createElement('div');
+        inp.className = 'input';
+        ans.append(lbl, inp);
 
-          cell.append(body);
-          container.append(cell);
-        });
-      } catch(err) {
-        alert('문제 생성 실패: ' + err.message);
-      }
-    });
+        body.append(ans);
+        cell.append(body);
+        document.getElementById('worksheet').append(cell);
+      });
+    } catch(err) {
+      alert('문제 생성 실패: ' + err.message);
+    }
+  });
   </script>
 </body>
 </html>
