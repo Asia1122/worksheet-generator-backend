@@ -49,8 +49,6 @@
       font-size: 18pt;
       font-weight: bold;
     }
-
-    /* 코드 + 번호·이름 한 줄 */
     .header-row {
       display: flex;
       justify-content: space-between;
@@ -58,7 +56,6 @@
     }
     .header-row .code {
       font-size: 14pt;
-      font-weight: normal;
       text-align: left;
     }
     .header-row .info {
@@ -103,8 +100,9 @@
       display: flex;
       overflow: hidden;
     }
+    /* 보기: flex 2 */
     .options {
-      flex: 3;
+      flex: 2;
       padding: 0.5rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -123,6 +121,7 @@
       margin-right: 4px;
       flex-shrink: 0;
     }
+    /* 정답: flex 1 (이전보다 폭이 커짐) */
     .answer-area {
       flex: 1;
       display: grid;
@@ -140,7 +139,6 @@
       padding: 0.5rem;
     }
 
-    /* 로딩 메시지 */
     .loading {
       grid-column: 1 / -1;
       text-align: center;
