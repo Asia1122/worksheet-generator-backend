@@ -39,6 +39,7 @@
       flex-direction: column;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid #d1d5db;
+      gap: 0.25rem;
     }
     .title-wrap {
       text-align: center;
@@ -48,20 +49,25 @@
       font-size: 18pt;
       font-weight: bold;
     }
-    .code {
-      margin-top: 0.25rem;
-      font-size: 14pt;
-      text-align: left;
-      font-weight: normal;
+
+    /* 코드 + 번호·이름 한 줄 */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
     }
-    .info {
+    .header-row .code {
+      font-size: 14pt;
+      font-weight: normal;
+      text-align: left;
+    }
+    .header-row .info {
       display: flex;
       justify-content: flex-end;
-      margin-top: 0.5rem;
       font-size: 14pt;
       gap: 2rem;
     }
-    .info div {
+    .header-row .info div {
       white-space: pre;
       margin: 0;
     }
@@ -75,7 +81,7 @@
       margin-top:0.5rem;
     }
 
-    /* 각 셀 */
+    /* 셀 */
     .cell {
       box-sizing:border-box;
       border:1px solid #d1d5db;
@@ -133,6 +139,14 @@
     .answer-input {
       padding:0.5rem;
     }
+
+    .loading {
+      grid-column:1 / -1;
+      text-align:center;
+      font-size:12pt;
+      color:#555;
+      padding-top:2rem;
+    }
   </style>
 </head>
 <body class="p-6">
@@ -175,13 +189,17 @@
       <div class="title-wrap">
         <h2 id="page-title">학습지</h2>
       </div>
-      <div class="code" id="page-code"></div>
-      <div class="info">
-        <div>번호:        </div>
-        <div>이름:         </div>
+      <div class="header-row">
+        <div class="code" id="page-code"></div>
+        <div class="info">
+          <div>번호:        </div>
+          <div>이름:           </div>
+        </div>
       </div>
     </div>
-    <div class="page-content" id="page-content"></div>
+    <div class="page-content" id="page-content">
+      <div class="loading">문제 생성 중입니다…</div>
+    </div>
   </div>
 
   <script>
