@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>학습지 생성기</title>
+  <title>학습지 생성기 v1.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 인쇄용 A4 설정 */
@@ -26,21 +26,21 @@
       padding-bottom: 0.5rem;
       border-bottom: 1px solid #d1d5db;
     }
-    .page-header .title-wrap {
+    .title-wrap {
       display: flex;
       justify-content: center;
       align-items: baseline;
     }
-    .page-header h2 {
+    .title-wrap h2 {
       font-size: 16pt;
       font-weight: bold;
       margin: 0;
     }
-    .page-header .code {
+    .title-wrap .code {
       margin-left: 1rem;
       font-size: 12pt;
     }
-    .page-header .info {
+    .info {
       display: flex;
       justify-content: flex-end;
       margin-top: 0.5rem;
@@ -91,21 +91,25 @@
     }
     .answer-area {
       flex: 1;
-      padding: 0.5rem;
-      border-left: 1px solid #d1d5db;
       display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
-      font-size: clamp(6pt, 1vw, 10pt);
+      flex-direction: column;
+      border-left: 1px solid #d1d5db;
     }
-    .answer-area span {
-      font-weight: bold;
+    .answer-label {
+      flex: 0 0 auto;
+      text-align: center;
+      font-size: clamp(6pt, 1vw, 10pt);
+      padding: 0.5rem;
+      border-bottom: 1px solid #d1d5db;
       margin: 0;
+    }
+    .answer-input {
+      flex: 1 1 auto;
+      padding: 0.5rem;
     }
   </style>
 </head>
 <body class="p-6">
-  <!-- 입력 폼 -->
   <div id="controls" class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
@@ -135,29 +139,19 @@
       <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">학습지 생성</button>
     </form>
   </div>
-
-  <!-- 출력 영역 -->
   <div id="worksheet" class="mt-8"></div>
-
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
     const labels = ['①','②','③','④','⑤'];
-
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
       const level = document.getElementById('level').value;
       const topic = document.getElementById('topic').value;
       const count = Math.min(+document.getElementById('count').value, 10);
       const container = document.getElementById('worksheet');
-
       container.innerHTML = '<p class="text-center">문제를 생성 중입니다…</p>';
-
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ level, topic, count })
-        });
+        const res = await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ level, topic, count }) });
         if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
         const { worksheet_code, questions } = await res.json();
         container.innerHTML = renderWorksheet(worksheet_code, questions, topic, level);
@@ -166,7 +160,6 @@
         container.innerHTML = `<p class="text-red-600 text-center">문제 생성 실패: ${err.message}</p>`;
       }
     });
-
     function renderWorksheet(code, qs, topic, level) {
       let html = `
       <div class="page">
@@ -181,25 +174,23 @@
             <div>이름: __________</div>
           </div>
         </header>
-        <div class="page-content">
-      `;
+        <div class="page-content">`;
       qs.forEach(q => {
         html += `
           <div class="cell">
             <div class="question">${q.number}. ${q.stem}</div>
             <div class="body-split">
-              <ul class="options">
-                ${q.options.map((opt,i) => `<li>${labels[i]} ${opt}</li>`).join('')}
-              </ul>
-              <div class="answer-area"><span>정답</span></div>
+              <ul class="options">${q.options.map((opt,i) => `<li>${labels[i]} ${opt}</li>`).join('')}</ul>
+              <div class="answer-area">
+                <div class="answer-label">정답</div>
+                <div class="answer-input"></div>
+              </div>
             </div>
-          </div>
-        `;
+          </div>`;
       });
       html += `
         </div>
-      </div>
-      `;
+      </div>`;
       return html;
     }
   </script>
