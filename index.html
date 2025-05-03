@@ -1,71 +1,68 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* A4 용지(210×297mm)를 2열×5행으로 절대 고정 */
+    /* A4 본문: 210×297mm 중, 헤더/여백 제외 후 267mm 높이를 5등분 */
     .page {
       width: 210mm;
-      height: 297mm;
+      height: 267mm;
       display: grid;
-      grid-template-columns: 105mm 105mm;
-      grid-template-rows: repeat(5, 59.4mm);
-      margin: 0 auto;
+      grid-template-columns: 1fr 1fr;
+      /* 각 행의 높이를 267mm/5 = 53.4mm로 절대 고정 */
+      grid-template-rows: repeat(5, 53.4mm);
+      gap: 4mm;
       box-sizing: border-box;
     }
     .cell {
+      position: relative;
+      overflow: hidden;
       border: 1px solid #333;
-      box-sizing: border-box;
       padding: 4mm;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
     /* 1) 문제 영역 (셀 상단) */
-    .cell-header {
-      font-size: 12pt;
+    .question {
+      font-size: clamp(8px, 1.5vw, 14px);
       line-height: 1.2;
       flex: 0 0 auto;
+      margin-bottom: 4px;
       overflow: hidden;
     }
     /* 2) 본문: 보기·정답 분할 */
-    .cell-body {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      grid-template-rows: auto 1fr;
+    .body-split {
+      display: flex;
       flex: 1 1 auto;
-      margin-top: 4px;
       overflow: hidden;
     }
     /* 2a) 보기: 2열 그리드 */
     .options {
-      grid-column: 1 / 2;
+      width: 70%;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 2mm;
-      font-size: 10pt;
-      overflow: hidden;
+      font-size: clamp(7px, 1.2vw, 12px);
+      overflow-wrap: break-word;
     }
-    /* 2b) 정답: 위아래 2구역 */
+    /* 2b) 정답: 위아래 분할 */
     .answer-area {
-      grid-column: 2 / 3;
+      width: 30%;
       display: grid;
       grid-template-rows: auto 1fr;
-      border-left: 1px solid #333;
-      padding-left: 2mm;
+      text-align: center;
       overflow: hidden;
     }
     .answer-area .label {
-      text-align: center;
-      font-size: 12pt;
-      line-height: 1.2;
+      font-size: clamp(8px, 1.2vw, 12px);
+      align-self: center;
     }
     .answer-area .input {
       border-bottom: 1px solid #000;
-      margin-top: 2mm;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -75,8 +72,8 @@
   </script>
 
   <form id="settings" style="margin-bottom:8px;">
-    <input id="topic" placeholder="학습 주제" required/>
-    <input id="count" type="number" min="1" max="10" value="10" required/>
+    <input id="topic" placeholder="학습 주제" required />
+    <input id="count" type="number" min="1" max="10" value="10" required />
     <select id="type">
       <option value="객관식">객관식</option>
       <option value="단답형">단답형</option>
@@ -93,7 +90,6 @@
       const topic = document.getElementById('topic').value;
       const count = +document.getElementById('count').value;
       const type  = document.getElementById('type').value;
-
       const container = document.getElementById('worksheet');
       container.innerHTML = '';
 
@@ -107,33 +103,32 @@
         const { questions } = await res.json();
 
         questions.forEach(q => {
-          // 셀
           const cell = document.createElement('div');
           cell.className = 'cell';
 
-          // 1) 문제 영역
-          const hdr = document.createElement('div');
-          hdr.className = 'cell-header';
-          hdr.textContent = `(${q.number}) ${q.stem}`;
-          cell.append(hdr);
+          // 1) 문제
+          const qEl = document.createElement('div');
+          qEl.className = 'question';
+          qEl.textContent = `(${q.number}) ${q.stem}`;
+          cell.append(qEl);
 
-          // 2) 본문 split
+          // 2) 본문 분할
           const body = document.createElement('div');
-          body.className = 'cell-body';
+          body.className = 'body-split';
 
-          // 2a) 보기 영역 (2열)
-          const opts = document.createElement('div');
-          opts.className = 'options';
+          // 2a) 보기
+          const opt = document.createElement('div');
+          opt.className = 'options';
           if (q.options) {
             q.options.forEach(o => {
               const p = document.createElement('p');
               p.textContent = o;
-              opts.append(p);
+              opt.append(p);
             });
           }
-          body.append(opts);
+          body.append(opt);
 
-          // 2b) 정답 영역 (위아래 분할)
+          // 2b) 정답
           const ans = document.createElement('div');
           ans.className = 'answer-area';
           const lbl = document.createElement('div');
