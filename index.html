@@ -1,139 +1,106 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* A4 사이즈의 본문 높이(약 267mm)를 고정, 두 열 × 다섯 행 그리드 */
-    .page {
-      width: 210mm;
-      height: 267mm;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: repeat(5, 1fr);
-      gap: 4mm;
-    }
-    .cell {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid #333;
-      padding: 4mm;
-      display: flex;
-      flex-direction: column;
-    }
-    .question {
-      /* 최대 14px, 최소 8px, 뷰포트 너비에 따라 자동 조정 */
-      font-size: clamp(8px, 1.5vw, 14px);
-      line-height: 1.2;
-      flex: 0 0 auto;
-      margin-bottom: 4px;
-    }
-    .body-split {
-      display: flex;
-      flex: 1 1 auto;
-    }
-    .options {
-      width: 70%;
-      overflow-wrap: break-word;
-      font-size: clamp(7px, 1.2vw, 12px);
-    }
-    .answer-area {
-      width: 30%;
-      display: grid;
-      grid-template-rows: auto 1fr;
-      text-align: center;
-    }
-    .answer-area .label {
-      font-size: clamp(8px, 1.2vw, 12px);
-      align-self: center;
-    }
-    .answer-area .input {
-      /* 입력란(빈 공간) */
-      border-bottom: 1px solid #000;
-      margin-top: 4px;
-    }
+    @page { size: A4 portrait; margin: 15mm; }
+    @media print { #controls { display: none; } }
+    body { background: #F3F4F6; margin:0; padding:0; }
+    .page { box-sizing: border-box; width:180mm; height:267mm; padding:10mm; background:#fff; margin:auto; display:flex; flex-direction:column; }
+    .page-header { flex:0 0 auto; padding-bottom:0.5rem; border-bottom:1px solid #d1d5db; }
+    .title-wrap { display:flex; justify-content:center; align-items:baseline; }
+    .title-wrap h2 { font-size:16pt; font-weight:bold; margin:0; }
+    .title-wrap .code { margin-left:1rem; font-size:12pt; }
+    .info { display:flex; justify-content:flex-end; margin-top:0.5rem; font-size:10pt; gap:2rem; }
+    .page-content { flex:1 1 auto; display:grid; grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(5,1fr); gap:4px; margin-top:0.5rem; }
+    .cell { box-sizing:border-box; border:1px solid #d1d5db; border-radius:0.5rem; display:flex; flex-direction:column; overflow:hidden; }
+    .question { flex:0 0 auto; padding:0.5rem; font-size:clamp(8pt,1.5vw,12pt); border-bottom:1px solid #d1d5db; margin:0; }
+    .body-split { flex:1 1 auto; display:flex; }
+    .options { flex:3; padding:0.5rem; list-style:none; margin:0; font-size:clamp(6pt,1vw,10pt); overflow-wrap:break-word; }
+    .options li { margin-bottom:0.25rem; }
+    .answer-area { flex:1; display:flex; flex-direction:column; border-left:1px solid #d1d5db; }
+    .answer-label { flex:0 0 auto; text-align:center; font-size:clamp(6pt,1vw,10pt); padding:0.5rem; margin:0; }
+    .answer-input { flex:1 1 auto; padding:0.5rem; }
   </style>
 </head>
-<body>
+<body class="p-6">
+  <div id="controls" class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+    <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
+    <form id="settings" class="grid gap-4 md:grid-cols-3">
+      <div>
+        <label for="qtype" class="block font-medium mb-1">문항 유형</label>
+        <select id="qtype" class="w-full border rounded p-2">
+          <option value="객관식">객관식</option>
+          <option value="단답형">단답형</option>
+          <option value="반반">반반</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label for="topic" class="block font-medium mb-1">학습 주제</label>
+        <select id="topic" class="w-full border rounded p-2">
+          <option value="세자리 수의 덧셈">세자리 수의 덧셈</option>
+          <option value="세자리 수의 나눗셈">세자리 수의 나눗셈</option>
+          <option value="세자리 수의 곱셈">세자리 수의 곱셈</option>
+        </select>
+      </div>
+      <div>
+        <label for="count" class="block font-medium mb-1">문항 수 (최대 10)</label>
+        <input id="count" type="number" value="10" min="1" max="10" class="w-full border rounded p-2" />
+      </div>
+      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">학습지 생성</button>
+    </form>
+  </div>
+  <div id="worksheet" class="mt-8"></div>
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
     const labels = ['①','②','③','④','⑤'];
-  </script>
-
-  <form id="settings">
-    <input id="topic" placeholder="학습 주제" required />
-    <input id="count" type="number" min="1" max="10" value="10" required />
-    <select id="type">
-      <option value="객관식">객관식</option>
-      <option value="단답형">단답형</option>
-      <option value="반반">반반</option>
-    </select>
-    <button type="submit">학습지 생성</button>
-  </form>
-
-  <div id="worksheet" class="page"></div>
-
-  <script>
-  document.getElementById('settings').addEventListener('submit', async e => {
-    e.preventDefault();
-    const topic = document.getElementById('topic').value;
-    const count = +document.getElementById('count').value;
-    const type  = document.getElementById('type').value;
-
-    document.getElementById('worksheet').innerHTML = '';
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ topic, count, type })
+    document.getElementById('settings').addEventListener('submit', async e => {
+      e.preventDefault();
+      const type = document.getElementById('qtype').value;
+      const topic = document.getElementById('topic').value;
+      const count = Math.min(+document.getElementById('count').value,10);
+      const container = document.getElementById('worksheet');
+      container.innerHTML = '<p class="text-center">문제를 생성 중입니다…</p>';
+      try {
+        const res = await fetch(API_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ type, topic, count })
+        });
+        if(!res.ok) throw new Error(res.status+res.statusText);
+        const { worksheet_code, questions } = await res.json();
+        container.innerHTML = renderWorksheet(worksheet_code,questions,topic);
+      } catch(err) {
+        console.error(err);
+        container.innerHTML = `<p class="text-red-600 text-center">문제 생성 실패: ${err.message}</p>`;
+      }
+    });
+    function renderWorksheet(code, qs, topic) {
+      let html = `
+      <div class="page">
+        <header class="page-header">
+          <div class="title-wrap"><h2>${topic}</h2><div class="code">코드: ${code}</div></div>
+          <div class="info"><div>학년: 초등학생</div><div>번: __</div><div>이름: __________</div></div>
+        </header>
+        <div class="page-content">`;
+      qs.forEach((q,i)=>{
+        html+=`
+          <div class="cell">
+            <div class="question">${i+1}. ${q.stem}</div>
+            <div class="body-split">
+              <ul class="options">${q.options? q.options.map((opt,j)=>`<li>${labels[j]} ${opt}</li>`).join('') : ''}</ul>
+              <div class="answer-area"><div class="answer-label">정답</div><div class="answer-input"></div></div>
+            </div>
+          </div>`;
       });
-      if (!res.ok) throw new Error(res.status);
-      const { worksheet_code, questions } = await res.json();
-
-      questions.forEach(q => {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-
-        const qEl = document.createElement('div');
-        qEl.className = 'question';
-        qEl.textContent = `(${q.number}) ${q.stem}`;
-        cell.append(qEl);
-
-        const body = document.createElement('div');
-        body.className = 'body-split';
-
-        // 보기 영역
-        const opt = document.createElement('div');
-        opt.className = 'options';
-        if (q.options) {
-          q.options.forEach((o,i) => {
-            const p = document.createElement('p');
-            p.textContent = o; // 이미 GPT에서 번호 없이 전달
-            opt.append(p);
-          });
-        }
-        body.append(opt);
-
-        // 정답 영역
-        const ans = document.createElement('div');
-        ans.className = 'answer-area';
-        const lbl = document.createElement('div');
-        lbl.className = 'label';
-        lbl.textContent = '정답';
-        const inp = document.createElement('div');
-        inp.className = 'input';
-        ans.append(lbl, inp);
-
-        body.append(ans);
-        cell.append(body);
-        document.getElementById('worksheet').append(cell);
-      });
-    } catch(err) {
-      alert('문제 생성 실패: ' + err.message);
+      html+=`
+        </div>
+      </div>`;
+      return html;
     }
-  });
   </script>
 </body>
 </html>
