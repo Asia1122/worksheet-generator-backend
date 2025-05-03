@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학습지 생성기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 인쇄용 A4 설정 */
+    @page { size: A4 portrait; margin: 15mm; }
+    @media print { #controls { display: none; } }
+    body { background: #F3F4F6; }
+    .page { box-sizing: border-box; width: 180mm; height: 267mm; padding: 10mm; background: #fff; margin: auto; }
+  </style>
+</head>
+<body class="p-6">
+  <!-- 입력 폼 -->
+  <div id="controls" class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+    <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
+    <form id="settings" class="grid gap-4 md:grid-cols-3">
+      <div>
+        <label for="level" class="block font-medium mb-1">학년</label>
+        <select id="level" class="w-full border rounded p-2">
+          <option value="1">1학년</option>
+          <option value="2">2학년</option>
+          <option value="3">3학년</option>
+          <option value="4">4학년</option>
+          <option value="5">5학년</option>
+          <option value="6">6학년</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label for="topic" class="block font-medium mb-1">학습 주제</label>
+        <select id="topic" class="w-full border rounded p-2">
+          <option value="세자리 수의 덧셈">세자리 수의 덧셈</option>
+          <option value="세자리 수의 나눗셈">세자리 수의 나눗셈</option>
+          <option value="세자리 수의 곱셈">세자리 수의 곱셈</option>
+        </select>
+      </div>
+      <div>
+        <label for="count" class="block font-medium mb-1">문항 수 (최대 10)</label>
+        <input id="count" type="number" value="10" min="1" max="10" class="w-full border rounded p-2" />
+      </div>
+      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">학습지 생성</button>
+    </form>
+  </div>
+
+  <!-- 출력 영역 -->
+  <div id="worksheet" class="mt-8"></div>
+
+  <script>
+    const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+
+    document.getElementById('settings').addEventListener('submit', async e => {
+      e.preventDefault();
+      const level = document.getElementById('level').value;
+      const topic = document.getElementById('topic').value;
+      const count = Math.min(+document.getElementById('count').value, 10);
+      const container = document.getElementById('worksheet');
+
+      container.innerHTML = '<p class="text-center">문제를 생성 중입니다…</p>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ level, topic, count })
+        });
+        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+        const { worksheet_code, questions } = await res.json();
+        container.innerHTML = renderWorksheet(worksheet_code, questions);
+      } catch(err) {
+        console.error(err);
+        container.innerHTML = `<p class="text-red-600 text-center">문제 생성 실패: ${err.message}</p>`;
+      }
+    });
+
+    function renderWorksheet(code, qs) {
+      return `
+      <div class="page flex flex-col text-[10pt] leading-tight">
+        <header class="text-center mb-4">
+          <h2 class="text-xl font-bold inline-block">${code} 학습지</h2>
+        </header>
+        <section class="grid grid-cols-2 grid-rows-5 gap-2 flex-grow">
+          ${qs.map(q => `
+            <div class="border rounded-lg p-2 flex flex-col">
+              <div class="flex items-center mb-1">
+                <p class="text-[14pt] m-0 flex-1">${q.stem}</p>
+                <span class="ml-4 text-[12pt]">정답: <span class="border-b w-16 inline-block">&nbsp;</span></span>
+              </div>
+              <ul class="list-none space-y-0.5 text-[12pt]">
+                ${q.options.map(o => `<li>${o}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('')}
+        </section>
+      </div>`;
+    }
+  </script>
+</body>
+</html>
