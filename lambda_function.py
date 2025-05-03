@@ -18,7 +18,7 @@ def call_openai(count, level, topic):
         "Return a JSON array of objects with keys: number, stem, options (list), answerIndex."
     )
     payload = json.dumps({
-        "model": "gpt-3.5-turbo",
+        "model": "gpt-4",
         "messages": [
             {"role": "system", "content": "You are a helpful teacher."},
             {"role": "user",   "content": prompt}

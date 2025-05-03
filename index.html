@@ -11,6 +11,11 @@
     @media print { #controls { display: none; } }
     body { background: #F3F4F6; }
     .page { box-sizing: border-box; width: 180mm; height: 267mm; padding: 10mm; background: #fff; margin: auto; }
+    .cell { position: relative; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem; }
+    .question { font-size: 12pt; margin-bottom: 0.5rem; }
+    .answer-box { position: absolute; bottom: 0.5rem; right: 0.5rem; width: 3rem; border-bottom: 1px solid #000; height: 1rem; }
+    ul.options { list-style: none; padding: 0; margin: 0; }
+    ul.options li { margin-bottom: 0.25rem; font-size: 10pt; }
   </style>
 </head>
 <body class="p-6">
@@ -49,7 +54,8 @@
   <div id="worksheet" class="mt-8"></div>
 
   <script>
-    const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const API_URL = 'https://<API_ID>.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const labels = ['①','②','③','④','⑤'];
 
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
@@ -68,33 +74,45 @@
         });
         if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
         const { worksheet_code, questions } = await res.json();
-        container.innerHTML = renderWorksheet(worksheet_code, questions);
+        container.innerHTML = renderWorksheet(worksheet_code, questions, topic);
       } catch(err) {
         console.error(err);
         container.innerHTML = `<p class="text-red-600 text-center">문제 생성 실패: ${err.message}</p>`;
       }
     });
 
-    function renderWorksheet(code, qs) {
-      return `
+    function renderWorksheet(code, qs, topic) {
+      let html = `
       <div class="page flex flex-col text-[10pt] leading-tight">
-        <header class="text-center mb-4">
-          <h2 class="text-xl font-bold inline-block">${code} 학습지</h2>
+        <header class="mb-4">
+          <div class="flex justify-center items-baseline">
+            <h2 class="text-2xl font-bold">${topic}</h2>
+            <span class="ml-4 text-lg">코드: ${code}</span>
+          </div>
+          <div class="flex justify-end mt-2 text-[12pt]">
+            <span class="mr-6">학년: </span>
+            <span class="mr-6">번: </span>
+            <span>이름: </span>
+          </div>
         </header>
         <section class="grid grid-cols-2 grid-rows-5 gap-2 flex-grow">
-          ${qs.map(q => `
-            <div class="border rounded-lg p-2 flex flex-col">
-              <div class="flex items-center mb-1">
-                <p class="text-[14pt] m-0 flex-1">${q.stem}</p>
-                <span class="ml-4 text-[12pt]">정답: <span class="border-b w-16 inline-block">&nbsp;</span></span>
-              </div>
-              <ul class="list-none space-y-0.5 text-[12pt]">
-                ${q.options.map(o => `<li>${o}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('')}
+      `;
+      qs.forEach(q => {
+        html += `
+          <div class="cell">
+            <p class="question">${q.number}. ${q.stem}</p>
+            <ul class="options">
+              ${q.options.map((opt, i) => `<li>${labels[i]} ${opt}</li>`).join('')}
+            </ul>
+            <div class="answer-box"></div>
+          </div>
+        `;
+      });
+      html += `
         </section>
-      </div>`;
+      </div>
+      `;
+      return html;
     }
   </script>
 </body>
