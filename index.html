@@ -31,22 +31,48 @@
       display:flex;
       flex-direction:column;
     }
-    .page-header { flex: 0 0 auto; }
-    .title-wrap {
-      display:flex; justify-content:center; align-items:baseline;
-    }
-    .title-wrap h2 {
-      font-size: 18pt; font-weight: bold; margin:0;
-    }
-    .title-wrap .code {
-      margin-left:1rem; font-size:14pt; font-weight: normal;
-    }
-    .info {
-      display:flex; justify-content:flex-end;
-      margin-top:0.25rem; font-size:10pt; gap:1.5rem;
-    }
-    /* 학년 정보는 지우고, 밑줄도 제거 */
-    .info div { white-space: pre; }
+    .page-header {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #d1d5db;
+  }
+
+  /* 타이틀/코드를 한 줄에 배치: 가운데/우측 정렬 */
+  .title-wrap {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .title-wrap h2 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin: 0;
+    text-align: center;
+    flex: 1;
+  }
+  .title-wrap .code {
+    font-size: 14pt;
+    font-weight: normal;
+    margin-left: 1rem;
+    text-align: right;
+    flex: 0 0 auto;
+  }
+
+  /* 번/이름 정보를 오른쪽 끝에 배치 */
+  .info {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+    font-size: 10pt;
+    gap: 2rem;
+  }
+  .info div {
+    /* "번호:    " 형태로 여유 공간 유지 */
+    white-space: pre;
+    margin: 0;
+  }
 
     .page-content {
       flex:1 1 auto;
@@ -149,10 +175,10 @@
         <div class="code" id="page-code"></div>
       </div>
       <div class="info">
-        <div>번:     </div>
-        <div>이름:    </div>
+        <div>번호:     </div>
+        <div>이름:     </div>
       </div>
-    </div>
+    </div> 
     <div class="page-content" id="page-content"></div>
   </div>
 
