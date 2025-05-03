@@ -1,86 +1,82 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* A4 용지(210×297mm), 페이지 바디 여백 제외한 10셀 */
+    /* A4 용지(210×297mm)를 2열×5행으로 절대 고정 */
     .page {
       width: 210mm;
       height: 297mm;
       display: grid;
       grid-template-columns: 105mm 105mm;
-      grid-template-rows: 59.4mm 59.4mm 59.4mm 59.4mm 59.4mm;
+      grid-template-rows: repeat(5, 59.4mm);
       margin: 0 auto;
       box-sizing: border-box;
     }
     .cell {
       border: 1px solid #333;
       box-sizing: border-box;
-      padding: 2mm;
+      padding: 4mm;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
-    /* 문제 영역 (셀 상단) */
+    /* 1) 문제 영역 (셀 상단) */
     .cell-header {
-      flex: 0 0 auto;
-      font-size: 12px;
+      font-size: 12pt;
       line-height: 1.2;
+      flex: 0 0 auto;
       overflow: hidden;
     }
-    /* 본문(split) */
+    /* 2) 본문: 보기·정답 분할 */
     .cell-body {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: auto 1fr;
       flex: 1 1 auto;
-      display: flex;
       margin-top: 4px;
+      overflow: hidden;
     }
-    /* 보기 2열 */
+    /* 2a) 보기: 2열 그리드 */
     .options {
-      flex: 2;
+      grid-column: 1 / 2;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 2mm;
-      font-size: 10px;
+      font-size: 10pt;
       overflow: hidden;
     }
-    /* 정답 영역 분할(상/하) */
-    .answer-container {
-      flex: 1;
+    /* 2b) 정답: 위아래 2구역 */
+    .answer-area {
+      grid-column: 2 / 3;
       display: grid;
       grid-template-rows: auto 1fr;
       border-left: 1px solid #333;
-      margin-left: 2mm;
+      padding-left: 2mm;
+      overflow: hidden;
     }
-    .answer-top {
+    .answer-area .label {
       text-align: center;
-      font-size: 12px;
-      line-height: 1;
+      font-size: 12pt;
+      line-height: 1.2;
     }
-    .answer-bottom {
-      border-top: 1px solid #000;
-      margin-top: 1mm;
+    .answer-area .input {
+      border-bottom: 1px solid #000;
+      margin-top: 2mm;
     }
   </style>
 </head>
 <body>
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
-    // 텍스트가 셀을 넘으면 폰트 크기를 줄여주는 함수
-    function adjustFontSize(el, minPx=6) {
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      while (el.scrollHeight > el.clientHeight && size > minPx) {
-        size -= 1;
-        el.style.fontSize = size + 'px';
-      }
-    }
   </script>
 
   <form id="settings" style="margin-bottom:8px;">
-    <input id="topic" placeholder="학습 주제" required />
-    <input id="count" type="number" min="1" max="10" value="10" required />
+    <input id="topic" placeholder="학습 주제" required/>
+    <input id="count" type="number" min="1" max="10" value="10" required/>
     <select id="type">
       <option value="객관식">객관식</option>
       <option value="단답형">단답형</option>
@@ -92,71 +88,69 @@
   <div id="worksheet" class="page"></div>
 
   <script>
-  document.getElementById('settings').addEventListener('submit', async e => {
-    e.preventDefault();
-    const topic = document.getElementById('topic').value;
-    const count = +document.getElementById('count').value;
-    const type  = document.getElementById('type').value;
+    document.getElementById('settings').addEventListener('submit', async e => {
+      e.preventDefault();
+      const topic = document.getElementById('topic').value;
+      const count = +document.getElementById('count').value;
+      const type  = document.getElementById('type').value;
 
-    const container = document.getElementById('worksheet');
-    container.innerHTML = '';
+      const container = document.getElementById('worksheet');
+      container.innerHTML = '';
 
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ topic, count, type })
-      });
-      if (!res.ok) throw new Error(res.status);
-      const { questions } = await res.json();
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ topic, count, type })
+        });
+        if (!res.ok) throw new Error(res.status);
+        const { questions } = await res.json();
 
-      questions.forEach(q => {
-        // 셀
-        const cell = document.createElement('div');
-        cell.className = 'cell';
+        questions.forEach(q => {
+          // 셀
+          const cell = document.createElement('div');
+          cell.className = 'cell';
 
-        // 1) 문제 영역
-        const hdr = document.createElement('div');
-        hdr.className = 'cell-header';
-        hdr.textContent = `(${q.number}) ${q.stem}`;
-        cell.append(hdr);
-        adjustFontSize(hdr);
+          // 1) 문제 영역
+          const hdr = document.createElement('div');
+          hdr.className = 'cell-header';
+          hdr.textContent = `(${q.number}) ${q.stem}`;
+          cell.append(hdr);
 
-        // 2) 본문 split
-        const body = document.createElement('div');
-        body.className = 'cell-body';
+          // 2) 본문 split
+          const body = document.createElement('div');
+          body.className = 'cell-body';
 
-        // 2a) 보기 영역
-        const opts = document.createElement('div');
-        opts.className = 'options';
-        if (q.options) {
-          q.options.forEach(o => {
-            const p = document.createElement('p');
-            p.textContent = o;  // 이미 GPT에서 번호 없이 전달
-            opts.append(p);
-          });
-        }
-        body.append(opts);
+          // 2a) 보기 영역 (2열)
+          const opts = document.createElement('div');
+          opts.className = 'options';
+          if (q.options) {
+            q.options.forEach(o => {
+              const p = document.createElement('p');
+              p.textContent = o; 
+              opts.append(p);
+            });
+          }
+          body.append(opts);
 
-        // 2b) 정답 영역
-        const ansCont = document.createElement('div');
-        ansCont.className = 'answer-container';
-        const ansTop = document.createElement('div');
-        ansTop.className = 'answer-top';
-        ansTop.textContent = '정답';
-        const ansBot = document.createElement('div');
-        ansBot.className = 'answer-bottom';
-        ansCont.append(ansTop, ansBot);
-        body.append(ansCont);
+          // 2b) 정답 영역 (위아래 분할)
+          const ans = document.createElement('div');
+          ans.className = 'answer-area';
+          const lbl = document.createElement('div');
+          lbl.className = 'label';
+          lbl.textContent = '정답';
+          const inp = document.createElement('div');
+          inp.className = 'input';
+          ans.append(lbl, inp);
+          body.append(ans);
 
-        cell.append(body);
-        container.append(cell);
-      });
-
-    } catch(err) {
-      alert('문제 생성 실패: ' + err.message);
-    }
-  });
+          cell.append(body);
+          container.append(cell);
+        });
+      } catch(err) {
+        alert('문제 생성 실패: ' + err.message);
+      }
+    });
   </script>
 </body>
 </html>
