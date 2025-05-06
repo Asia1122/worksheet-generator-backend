@@ -66,15 +66,16 @@ def lambda_handler(event, context):
         with table.batch_writer() as batch:
             for q in questions:
                 item = {
-                    'worksheet_code':  code,
+                    'worksheet_code': code,
                     'question_number': q['number'],
-                    'question':        q['stem']
+                    'question': q['stem'],
+                    'options': q.get('options', [])
                 }
-                if question_type == "단답형":
-                    item['answer'] = q.get('answer','')
+                # 객관식·단답형 모두 'answer' 필드에 저장
+                if 'answerIndex' in q:
+                    item['answer'] = q['answerIndex'] + 1
                 else:
-                    item['options']     = q.get('options',[])
-                    item['answerIndex'] = q.get('answerIndex',0) + 1  # 1-based
+                    item['answer'] = q.get('answer', '')
                 batch.put_item(Item=item)
 
         return {
