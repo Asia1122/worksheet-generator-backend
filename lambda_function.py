@@ -25,7 +25,7 @@ def call_openai(count, question_type, topic):
     prompt += "options (array of strings, if any), answerIndex (0-based) or answer (string) for short answers."
 
     payload = json.dumps({
-        "model": "model": "gpt-4o-mini",
+        "model": "gpt-4o-mini",
         "messages": [
             {"role":"system","content":"You are a helpful teacher."},
             {"role":"user","content":prompt}
