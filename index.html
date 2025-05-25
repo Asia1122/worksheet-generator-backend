@@ -36,20 +36,9 @@
 
     /* 각 셀 */
     .cell { box-sizing: border-box; border: 1px solid #d1d5db; display: flex; flex-direction: column; overflow: hidden; }
-    .question { flex: 0 0 50%; padding: 0.5rem; font-size: clamp(8pt,1.5vw,12pt); line-height: 1.2; border-bottom: 1px solid #d1d5db; overflow: hidden; margin: 0; }
+    .question { flex: 0 0 50%; padding: 0.5rem; font-size: clamp(10pt,2vw,14pt); line-height: 1.2; border-bottom: 1px solid #d1d5db; overflow: hidden; margin: 0; }
     .body-split { flex: 1; display: flex; overflow: hidden; }
-    .options {
-      flex: 2;
-      padding: 0.5rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.25rem;
-      list-style: none;
-      margin: 0;
-      font-size: 12pt; /* 기본 보기 폰트 크기 */
-      overflow-wrap: break-word;
-      white-space: normal;
-    }
+    .options { flex: 2; padding: 0.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; list-style: none; margin: 0; font-size: 12pt; overflow-wrap: break-word; white-space: normal; }
     .options li { display: flex; align-items: flex-start; }
     .options li::before { content: attr(data-label); margin-right: 4px; flex-shrink: 0; }
     .answer-area { flex: 1; display: grid; grid-template-rows: auto 1fr; border-left: 1px solid #d1d5db; }
@@ -78,27 +67,17 @@
   </div>
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
-    const topicsMap = {
-      '1단원': ['세 자리 수의 덧셈', '세 자리 수의 뺄셈'],
-      '2단원': ['직각 삼각형', '직사각형', '정사각형'],
-      '3단원': ['두 자릿 수 ÷ 한 자릿 수'],
-      '4단원': ['(몇 십) × (몇)', '(몇십몇) × (몇)'],
-      '5단원': ['시간의 덧셈', '시간의 뺄셈'],
-      '6단원': ['분수 비교', '소수 비교']
-    };
+    const topicsMap = { '1단원': ['세 자리 수의 덧셈','세 자리 수의 뺄셈'], '2단원': ['직각 삼각형','직사각형','정사각형'], '3단원': ['두 자릿 수 ÷ 한 자릿 수'], '4단원': ['(몇 십) × (몇)','(몇십몇) × (몇)'], '5단원': ['시간의 덧셈','시간의 뺄셈'], '6단원': ['분수 비교','소수 비교'] };
     const unitEl = document.getElementById('unit'), topicEl = document.getElementById('topic');
-    unitEl.addEventListener('change', () => {
-      topicEl.innerHTML = '';
-      (topicsMap[unitEl.value] || []).forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; topicEl.append(o); });
-    });
-    window.addEventListener('DOMContentLoaded', () => unitEl.dispatchEvent(new Event('change')));
+    unitEl.addEventListener('change', () => { topicEl.innerHTML = ''; (topicsMap[unitEl.value]||[]).forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;topicEl.append(o);}); });
+    window.addEventListener('DOMContentLoaded', ()=>unitEl.dispatchEvent(new Event('change')));
 
-    async function shrinkOptionsFonts() {
-      document.querySelectorAll('.options').forEach(list => {
-        let fs = parseFloat(window.getComputedStyle(list).fontSize);
-        while ((list.scrollHeight > list.clientHeight || list.scrollWidth > list.clientWidth) && fs > 8) {
+    async function shrinkFonts(selector, minSize=8) {
+      document.querySelectorAll(selector).forEach(el => {
+        let fs = parseFloat(window.getComputedStyle(el).fontSize);
+        while ((el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) && fs > minSize) {
           fs -= 1;
-          list.style.fontSize = fs + 'px';
+          el.style.fontSize = fs + 'px';
         }
       });
     }
@@ -115,25 +94,25 @@
       const content = document.getElementById('page-content');
       content.innerHTML = '<div class="loading">문제 생성 중입니다…</div>';
       try {
-        const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade, unit, topic, count, type, includeAdvice:true }) });
+        const res = await fetch(API_URL, { method: 'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ grade, unit, topic, count, type, includeAdvice:true }) });
         if (!res.ok) throw new Error(res.status);
         const { worksheet_code, questions } = await res.json();
         document.getElementById('page-code').textContent = worksheet_code;
         content.innerHTML = '';
         questions.forEach(q => {
-          const cell = document.createElement('div'); cell.className = 'cell';
-          const h = document.createElement('div'); h.className = 'question'; h.textContent = `(${q.number}) ${q.stem}`; if (q.stem.length > 70) h.style.fontSize='11pt'; cell.append(h);
-          const b = document.createElement('div'); b.className = 'body-split';
-          const opts = document.createElement('ul'); opts.className = 'options';
-          (q.options||[]).forEach((o,i) => { const li = document.createElement('li'); li.setAttribute('data-label', ['①','②','③','④'][i]); li.textContent=o; opts.append(li); });
-          b.append(opts);
-          const a = document.createElement('div'); a.className = 'answer-area'; const al = document.createElement('div'); al.className='answer-label'; al.textContent='정답'; const ai=document.createElement('div'); ai.className='answer-input'; ai.textContent=q.answer; a.append(al,ai); b.append(a);
+          const cell = document.createElement('div'); cell.className='cell';
+          const h = document.createElement('div'); h.className='question'; h.textContent=`(${q.number}) ${q.stem}`; if(q.stem.length>70)h.style.fontSize='11pt'; cell.append(h);
+          const b = document.createElement('div'); b.className='body-split';
+          const opts = document.createElement('ul'); opts.className='options';
+          (q.options||[]).forEach((o,i)=>{const li=document.createElement('li');li.setAttribute('data-label',['①','②','③','④'][i]);li.textContent=o;opts.append(li);}); b.append(opts);
+          const a = document.createElement('div'); a.className='answer-area'; const al=document.createElement('div'); al.className='answer-label'; al.textContent='정답'; const ai=document.createElement('div'); ai.className='answer-input'; ai.textContent=q.answer; a.append(al,ai); b.append(a);
           cell.append(b); content.append(cell);
         });
-        await shrinkOptionsFonts();
-        await fetch('/api/saveWorksheet', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ worksheet_code, questions }) });
-      } catch(err) { alert('문제 생성 실패: '+err.message); }
-    });
+        // 자동 축소 적용
+        await shrinkFonts('.options', 8);
+        await shrinkFonts('.question', 8);
+        await fetch('/api/saveWorksheet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({worksheet_code,questions})});
+      } catch(err){alert('문제 생성 실패: '+err.message);}    });
   </script>
 </body>
 </html>
