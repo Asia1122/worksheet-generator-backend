@@ -222,18 +222,7 @@
           content.append(cell);
         });
 
-        // 학습조언 필드가 API에서 오지 않을 경우, 기본 조언을 추가
-questions.forEach((q, idx) => {
-  if (!q.advice) {
-    const defaultTips = [
-      '계산 단계를 차례로 적어보세요.',
-      '문제를 천천히 읽고 핵심을 파악하세요.',
-      '중요한 숫자를 확인하며 풀어보세요.'
-    ];
-    q.advice = defaultTips[idx % defaultTips.length];
-  }
-});
-// DynamoDB에 학습조언이 포함된 문제 저장
+        // DynamoDB에 학습조언이 포함된 문제 저장
         await fetch('/api/saveWorksheet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
