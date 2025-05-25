@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📝 학습지 생성기</title>
+  <title>학습지 생성기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @page { size: A4 portrait; margin: 10mm 5mm 5mm 5mm; }
@@ -110,13 +110,6 @@
   <!-- 컨트롤 패널 -->
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
-    <!-- 기존 워크시트 선택 드롭다운 -->
-    <div class="mb-4">
-      <label for="worksheetSelect" class="block mb-1">기존 학습지 불러오기</label>
-      <select id="worksheetSelect" class="w-full border rounded p-2">
-        <option value="">■ 선택하세요 ■</option>
-      </select>
-    </div>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
       <div>
         <label for="qtype" class="block mb-1">문항 유형</label>
@@ -164,71 +157,92 @@
   </div>
 
   <script>
-    const API_URL     = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
-    const LIST_URL    = '/api/listWorksheets';
-    const GET_URL     = '/api/getWorksheet';
-    const worksheetSelect = document.getElementById('worksheetSelect');
+    const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const labels = ['①','②','③','④','⑤'];
 
-    // 페이지 로드시 기존 워크시트 코드 목록
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const res = await fetch(LIST_URL);
-        if (!res.ok) throw new Error(res.status);
-        const codes = await res.json();
-        codes.forEach(code => {
-          const opt = document.createElement('option');
-          opt.value = code;
-          opt.textContent = code;
-          worksheetSelect.append(opt);
-        });
-      } catch(e) {
-        console.error('기존 학습지 목록 불러오기 실패', e);
-      }
-    });
-
-    // 기존 워크시트 선택시 렌더링
-    worksheetSelect.addEventListener('change', async () => {
-      const code = worksheetSelect.value;
-      if (!code) return;
-      try {
-        const res = await fetch(`${GET_URL}?code=${code}`);
-        if (!res.ok) throw new Error(res.status);
-        const { worksheet_code, questions } = await res.json();
-        // 페이지 상단 정보 업데이트
-        document.getElementById('page-title').textContent = '기존 학습지';
-        document.getElementById('page-code').textContent  = worksheet_code;
-        // 셀 클리어
-        const content = document.getElementById('page-content');
-        content.innerHTML = '';
-        // 질문 렌더링
-        questions.forEach(q => {
-          const cell = document.createElement('div'); cell.className = 'cell';
-          const h = document.createElement('div'); h.className = 'question';
-          h.textContent = `(${q.question_number}) ${q.question}`;
-          if (h.textContent.length > 70) h.style.fontSize = '11pt';
-          cell.append(h);
-          const b = document.createElement('div'); b.className = 'body-split';
-          const opts = document.createElement('ul'); opts.className = 'options';
-          if (q.options) q.options.forEach((o,i) => {
-            const li = document.createElement('li'); li.setAttribute('data-label', ['①','②','③','④'][i]);
-            li.textContent = o; opts.append(li);
-          });
-          b.append(opts);
-          const a = document.createElement('div'); a.className = 'answer-area';
-          const al = document.createElement('div'); al.className = 'answer-label'; al.textContent = '정답';
-          const ai = document.createElement('div'); ai.className = 'answer-input'; ai.textContent = q.answer;
-          a.append(al, ai); b.append(a);
-          cell.append(b); content.append(cell);
-        });
-      } catch(err) {
-        alert('기존 학습지 불러오기 실패: ' + err.message);
-      }
-    });
-
-    // 새로 생성 로직 (변경 없음)
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
-      // ...[생성 로직 그대로 유지]...
+      const qtype = document.getElementById('qtype').value;
+      const topic = document.getElementById('topic').value;
+      const count = +document.getElementById('count').value;
+
+      document.getElementById('page-title').textContent = topic;
+      document.getElementById('page-code').textContent = '';
+      const content = document.getElementById('page-content');
+      content.innerHTML = '<div class="loading">문제 생성 중입니다…</div>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ topic, count, type: qtype, includeAdvice: true })
+        });
+        if (!res.ok) throw new Error(res.status);
+        const { worksheet_code, questions } = await res.json();
+
+        document.getElementById('page-code').textContent = worksheet_code;
+        content.innerHTML = '';
+
+        questions.forEach(q => {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+
+          const h = document.createElement('div');
+          h.className = 'question';
+          h.textContent = `(${q.number}) ${q.stem}`;
+          if (q.stem.length > 70) h.style.fontSize = '11pt';
+          cell.append(h);
+
+          const b = document.createElement('div');
+          b.className = 'body-split';
+
+          const opts = document.createElement('ul');
+          opts.className = 'options';
+          if (q.options) {
+            q.options.forEach((o,i) => {
+              const li = document.createElement('li');
+              li.setAttribute('data-label', labels[i]);
+              li.textContent = o;
+              opts.append(li);
+            });
+          }
+          b.append(opts);
+
+          const a = document.createElement('div');
+          a.className = 'answer-area';
+          const al = document.createElement('div');
+          al.className = 'answer-label';
+          al.textContent = '정답';
+          const ai = document.createElement('div');
+          ai.className = 'answer-input';
+          a.append(al, ai);
+          b.append(a);
+
+          cell.append(b);
+          content.append(cell);
+        });
+
+        // 학습조언 필드가 API에서 오지 않을 경우, 기본 조언을 추가
+questions.forEach((q, idx) => {
+  if (!q.advice) {
+    const defaultTips = [
+      '계산 단계를 차례로 적어보세요.',
+      '문제를 천천히 읽고 핵심을 파악하세요.',
+      '중요한 숫자를 확인하며 풀어보세요.'
+    ];
+    q.advice = defaultTips[idx % defaultTips.length];
+  }
+});
+// DynamoDB에 학습조언이 포함된 문제 저장
+        await fetch('/api/saveWorksheet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ worksheet_code, questions })
+        });
+
+      } catch(err) {
+        alert('문제 생성 실패: ' + err.message);
+      }
     });
   </script>
 </body>
