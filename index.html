@@ -83,8 +83,8 @@
       gap: 0.25rem;
       list-style: none;
       margin: 0;
-      font-size: clamp(6pt,1vw,10pt);
-      font-size: 120%;
+      /* 보기 폰트를 20% 더 크게 */
+      font-size: 1.2em;
       overflow-wrap: break-word;
     }
     .options li { display: flex; align-items: flex-start; }
@@ -112,6 +112,34 @@
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
+      <!-- 윗줄: 학년, 단원, 학습 주제 -->
+      <div>
+        <label for="grade" class="block mb-1">학년</label>
+        <select id="grade" class="w-full border rounded p-2">
+          <option value="3">3학년</option>
+        </select>
+      </div>
+      <div>
+        <label for="unit" class="block mb-1">단원</label>
+        <select id="unit" class="w-full border rounded p-2">
+          <option value="단원1">단원1</option>
+          <option value="단원2">단원2</option>
+          <option value="단원3">단원3</option>
+        </select>
+      </div>
+      <div>
+        <label for="topic" class="block mb-1">학습 주제</label>
+        <select id="topic" class="w-full border rounded p-2">
+          <option value="세자리 수의 덧셈">세자리 수의 덧셈</option>
+          <option value="세자리 수의 나눗셈">세자리 수의 나눗셈</option>
+          <option value="세자리 수의 곱셈">세자리 수의 곱셈</option>
+        </select>
+      </div>
+      <!-- 아랫줄: 문항 수, 문항 유형, 생성 버튼 -->
+      <div>
+        <label for="count" class="block mb-1">문항 수 (1–10)</label>
+        <input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/>
+      </div>
       <div>
         <label for="qtype" class="block mb-1">문항 유형</label>
         <select id="qtype" class="w-full border rounded p-2">
@@ -120,21 +148,7 @@
           <option value="반반">반반</option>
         </select>
       </div>
-      <div class="md:col-span-2">
-        <label for="topic" class="block mb-1">학습 주제</label>
-        <select id="topic" class="w-full border rounded p-2">
-          <option value="세자리 수의 덧셈">세자리 수의 덧셈</option>
-          <option value="세자리 수의 나눗셈">세자리 수의 나눗셈</option>
-          <option value="세자리 수의 곱셈">세자리 수의 곱셈</option>
-        </select>
-      </div>
-      <div>
-        <label for="count" class="block mb-1">문항 수 (1–10)</label>
-        <input id="count" type="number" min="1" max="10" value="10"
-               class="w-full border rounded p-2"/>
-      </div>
-      <button type="submit"
-              class="md:col-span-3 bg-blue-600 text-white py-2 rounded">
+      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">
         학습지 생성
       </button>
     </form>
@@ -159,24 +173,25 @@
 
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
-    const labels = ['①','②','③','④','⑤'];
 
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
-      const qtype = document.getElementById('qtype').value;
+      const grade = document.getElementById('grade').value;
+      const unit  = document.getElementById('unit').value;
       const topic = document.getElementById('topic').value;
       const count = +document.getElementById('count').value;
+      const qtype = document.getElementById('qtype').value;
 
-      document.getElementById('page-title').textContent = topic;
+      document.getElementById('page-title').textContent = `${grade}학년 ${unit} - ${topic}`;
       document.getElementById('page-code').textContent = '';
       const content = document.getElementById('page-content');
       content.innerHTML = '<div class="loading">문제 생성 중입니다…</div>';
 
       try {
         const res = await fetch(API_URL, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ topic, count, type: qtype, includeAdvice: true })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grade, unit, topic, count, type: qtype, includeAdvice: true })
         });
         if (!res.ok) throw new Error(res.status);
         const { worksheet_code, questions } = await res.json();
@@ -185,49 +200,33 @@
         content.innerHTML = '';
 
         questions.forEach(q => {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-
-          const h = document.createElement('div');
-          h.className = 'question';
+          const cell = document.createElement('div'); cell.className = 'cell';
+          const h = document.createElement('div'); h.className = 'question';
           h.textContent = `(${q.number}) ${q.stem}`;
           if (q.stem.length > 70) h.style.fontSize = '11pt';
           cell.append(h);
 
-          const b = document.createElement('div');
-          b.className = 'body-split';
-
-          const opts = document.createElement('ul');
-          opts.className = 'options';
-          if (q.options) {
-            q.options.forEach((o,i) => {
-              const li = document.createElement('li');
-              li.setAttribute('data-label', labels[i]);
-              li.textContent = o;
-              opts.append(li);
-            });
-          }
+          const b = document.createElement('div'); b.className = 'body-split';
+          const opts = document.createElement('ul'); opts.className = 'options';
+          if (q.options) q.options.forEach((o,i) => {
+            const li = document.createElement('li'); li.setAttribute('data-label', ['①','②','③','④'][i]);
+            li.textContent = o; opts.append(li);
+          });
           b.append(opts);
 
-          const a = document.createElement('div');
-          a.className = 'answer-area';
-          const al = document.createElement('div');
-          al.className = 'answer-label';
-          al.textContent = '정답';
-          const ai = document.createElement('div');
-          ai.className = 'answer-input';
-          a.append(al, ai);
-          b.append(a);
+          const a = document.createElement('div'); a.className = 'answer-area';
+          const al = document.createElement('div'); al.className = 'answer-label'; al.textContent = '정답';
+          const ai = document.createElement('div'); ai.className = 'answer-input'; ai.textContent = q.answer;
+          a.append(al, ai); b.append(a);
 
-          cell.append(b);
-          content.append(cell);
+          cell.append(b); content.append(cell);
         });
 
-        // DynamoDB에 학습조언이 포함된 문제 저장
+        // DynamoDB 저장
         await fetch('/api/saveWorksheet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ worksheet_code, questions })
+          body: JSON.stringify({ worksheet_code: worksheet_code, questions })
         });
 
       } catch(err) {
