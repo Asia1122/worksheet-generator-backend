@@ -1,4 +1,7 @@
-import os, json, boto3, http.client
+import os
+import json
+import boto3
+import http.client
 
 OPENAI_KEY     = os.getenv('OPENAI_API_KEY')
 DYNAMODB_TABLE = os.getenv('DYNAMODB_TABLE')
@@ -21,8 +24,14 @@ def call_openai(count, question_type, topic):
             "and half short-answer questions. "
         )
     prompt += "Include a mix of sentence-form problems, simple arithmetic, and formula-only problems such as '354+223 = ?'. "
-    prompt += "Return a JSON array of objects with keys: number (int), stem (string), "
-    prompt += "options (array of strings, if any), answerIndex (0-based) or answer (string) for short answers."
+    # advice 요청 문구 추가
+    prompt += (
+        "Return a JSON array of objects with keys: "
+        "number (int), stem (string), "
+        "options (array of strings, if any), "
+        "answerIndex (0-based) or answer (string) for short answers, "
+        "advice (string): a one-line study tip for each question."
+    )
 
     payload = json.dumps({
         "model": "gpt-4o-mini",
@@ -46,8 +55,9 @@ def call_openai(count, question_type, topic):
     raw  = data["choices"][0]["message"]["content"]
 
     # JSON 배열만 추출
-    s = raw.find('['); e = raw.rfind(']')
-    if s<0 or e<0:
+    s = raw.find('[')
+    e = raw.rfind(']')
+    if s < 0 or e < 0:
         print("JSON parsing error:", raw)
         raise Exception("JSON 배열을 찾을 수 없습니다.")
     arr = json.loads(raw[s:e+1])
@@ -55,38 +65,43 @@ def call_openai(count, question_type, topic):
 
 def lambda_handler(event, context):
     try:
-        body         = json.loads(event.get('body','{}'))
-        topic        = body['topic']
-        count        = int(body.get('count',10))
-        question_type= body.get('type','객관식')
-        code         = context.aws_request_id[:8]
+        body          = json.loads(event.get('body','{}'))
+        topic         = body['topic']
+        count         = int(body.get('count',10))
+        question_type = body.get('type','객관식')
+        code          = context.aws_request_id[:8]
 
         questions = call_openai(count, question_type, topic)
 
         with table.batch_writer() as batch:
             for q in questions:
-                item = {
-                    'worksheet_code': code,
-                    'question_number': q['number'],
-                    'question': q['stem'],
-                    'options': q.get('options', [])
-                }
                 # 객관식·단답형 모두 'answer' 필드에 저장
                 if 'answerIndex' in q:
-                    item['answer'] = q['answerIndex'] + 1
+                    answer_value = q['answerIndex'] + 1
                 else:
-                    item['answer'] = q.get('answer', '')
+                    answer_value = q.get('answer', '')
+
+                item = {
+                    'worksheet_code' : code,
+                    'question_number': q['number'],
+                    'question'       : q['stem'],
+                    'options'        : q.get('options', []),
+                    'answer'         : answer_value,
+                    # advice 필드 추가
+                    'advice'         : q.get('advice', '')
+                }
                 batch.put_item(Item=item)
 
         return {
-            'statusCode':200,
-            'headers':{'Content-Type':'application/json'},
-            'body':json.dumps({'worksheet_code':code,'questions':questions})
+            'statusCode': 200,
+            'headers': {'Content-Type':'application/json'},
+            'body': json.dumps({'worksheet_code': code, 'questions': questions})
         }
+
     except Exception as e:
-        print("Error:",str(e))
+        print("Error:", str(e))
         return {
-            'statusCode':500,
-            'headers':{'Content-Type':'application/json'},
-            'body':json.dumps({'error':str(e)})
+            'statusCode': 500,
+            'headers': {'Content-Type':'application/json'},
+            'body': json.dumps({'error': str(e)})
         }
