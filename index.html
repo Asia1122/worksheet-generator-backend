@@ -175,7 +175,7 @@
         const res = await fetch(API_URL, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ topic, count, type: qtype })
+          body: JSON.stringify({ topic, count, type: qtype, includeAdvice: true })
         });
         if (!res.ok) throw new Error(res.status);
         const { worksheet_code, questions } = await res.json();
