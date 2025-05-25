@@ -83,8 +83,7 @@
       gap: 0.25rem;
       list-style: none;
       margin: 0;
-      /* 보기 폰트를 20% 더 크게 */
-      font-size: 1.2em;
+      font-size: 14pt; /* 보기 폰트 크기 조정 */
       overflow-wrap: break-word;
     }
     .options li { display: flex; align-items: flex-start; }
@@ -122,18 +121,17 @@
       <div>
         <label for="unit" class="block mb-1">단원</label>
         <select id="unit" class="w-full border rounded p-2">
-          <option value="단원1">단원1</option>
-          <option value="단원2">단원2</option>
-          <option value="단원3">단원3</option>
+          <option value="1단원">1단원: 덧셈과 뺄셈</option>
+          <option value="2단원">2단원: 평면도형</option>
+          <option value="3단원">3단원: 나눗셈</option>
+          <option value="4단원">4단원: 곱셈</option>
+          <option value="5단원">5단원: 길이와 시간</option>
+          <option value="6단원">6단원: 분수와 소수</option>
         </select>
       </div>
       <div>
         <label for="topic" class="block mb-1">학습 주제</label>
-        <select id="topic" class="w-full border rounded p-2">
-          <option value="세자리 수의 덧셈">세자리 수의 덧셈</option>
-          <option value="세자리 수의 나눗셈">세자리 수의 나눗셈</option>
-          <option value="세자리 수의 곱셈">세자리 수의 곱셈</option>
-        </select>
+        <select id="topic" class="w-full border rounded p-2"></select>
       </div>
       <!-- 아랫줄: 문항 수, 문항 유형, 생성 버튼 -->
       <div>
@@ -173,12 +171,37 @@
 
   <script>
     const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const unitsTopics = {
+      '1단원': ['세 자리 수의 덧셈','세 자리 수의 뺄셈'],
+      '2단원': ['직각 삼각형','직사각형','정사각형'],
+      '3단원': ['두 자릿 수 ÷ 한 자릿 수'],
+      '4단원': ['(몇 십) × (몇)','(몇십몇) × (몇)'],
+      '5단원': ['시간의 덧셈','시간의 뺄셈'],
+      '6단원': ['분모가 같은 분수의 크기 비교하기','소수의 크기 비교하기']
+    };
+
+    const unitSelect = document.getElementById('unit');
+    const topicSelect = document.getElementById('topic');
+
+    // 단원 변경 시 학습 주제 갱신
+    unitSelect.addEventListener('change', () => {
+      const topics = unitsTopics[unitSelect.value] || [];
+      topicSelect.innerHTML = '';
+      topics.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        topicSelect.append(opt);
+      });
+    });
+    // 초기 로드 시 1단원 주제 채우기
+    window.addEventListener('DOMContentLoaded', () => unitSelect.dispatchEvent(new Event('change')));
 
     document.getElementById('settings').addEventListener('submit', async e => {
       e.preventDefault();
       const grade = document.getElementById('grade').value;
-      const unit  = document.getElementById('unit').value;
-      const topic = document.getElementById('topic').value;
+      const unit  = unitSelect.value;
+      const topic = topicSelect.value;
       const count = +document.getElementById('count').value;
       const qtype = document.getElementById('qtype').value;
 
@@ -222,11 +245,10 @@
           cell.append(b); content.append(cell);
         });
 
-        // DynamoDB 저장
         await fetch('/api/saveWorksheet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ worksheet_code: worksheet_code, questions })
+          body: JSON.stringify({ worksheet_code, questions })
         });
 
       } catch(err) {
