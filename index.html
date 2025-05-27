@@ -105,7 +105,7 @@
           const b = document.createElement('div'); b.className='body-split';
           const opts = document.createElement('ul'); opts.className='options';
           (q.options||[]).forEach((o,i)=>{const li=document.createElement('li');li.setAttribute('data-label',['①','②','③','④'][i]);li.textContent=o;opts.append(li);}); b.append(opts);
-          const a = document.createElement('div'); a.className='answer-area'; const al=document.createElement('div'); al.className='answer-label'; al.textContent='정답'; const ai=document.createElement('div'); ai.className='answer-input'; ai.textContent=q.answer; a.append(al,ai); b.append(a);
+          const a = document.createElement('div'); a.className='answer-area'; const al=document.createElement('div'); al.className='answer-label'; al.textContent='정답'; const ai=document.createElement('div'); ai.className='answer-input'; ai.textContent = (q.options && q.options.length > 0) ? q.answer : ''; a.append(al,ai); b.append(a);
           cell.append(b); content.append(cell);
         });
         // 자동 축소 적용
