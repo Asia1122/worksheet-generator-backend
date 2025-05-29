@@ -1,3 +1,14 @@
+import os
+import json
+import boto3
+import http.client
+
+OPENAI_KEY     = os.getenv('OPENAI_API_KEY')
+DYNAMODB_TABLE = os.getenv('DYNAMODB_TABLE')
+
+dynamodb = boto3.resource('dynamodb')
+table    = dynamodb.Table(DYNAMODB_TABLE)
+
 def call_openai(count, question_type, topic):
     conn = http.client.HTTPSConnection("api.openai.com")
 
@@ -54,4 +65,66 @@ def call_openai(count, question_type, topic):
         ],
         "temperature": 0.7
     })
-    # …이하 기존 OpenAI 요청 및 응답 파싱 로직 그대로…
+    
+
+    conn.request("POST", "/v1/chat/completions", payload, headers)
+    res  = conn.getresponse()
+    body = res.read().decode()
+    if res.status != 200:
+        raise Exception(f"OpenAI API error {res.status}: {body}")
+
+    data = json.loads(body)
+    raw  = data["choices"][0]["message"]["content"]
+
+    # JSON 배열만 추출
+    s = raw.find('[')
+    e = raw.rfind(']')
+    if s < 0 or e < 0:
+        raise Exception(f"JSON parsing error: cannot find array delimiters\nRaw response:\n{raw}")
+
+    arr = json.loads(raw[s:e+1])
+    if not isinstance(arr, list):
+        raise Exception(f"OpenAI response is not a list: {type(arr)}\nRaw response:\n{raw}")
+
+    return arr
+
+def lambda_handler(event, context):
+    try:
+        body          = json.loads(event.get('body', '{}'))
+        topic         = body['topic']
+        count         = int(body.get('count', 10))
+        question_type = body.get('type', '객관식')
+        code          = context.aws_request_id[:8]
+
+        questions = call_openai(count, question_type, topic)
+
+        with table.batch_writer() as batch:
+            for q in questions:
+                if 'answerIndex' in q:
+                    answer_value = q['answerIndex'] + 1
+                else:
+                    answer_value = q.get('answer', '')
+
+                item = {
+                    'worksheet_code' : code,
+                    'question_number': q['number'],
+                    'question'       : q['stem'],
+                    'options'        : q.get('options', []),
+                    'answer'         : answer_value,
+                    'advice'         : q.get('advice', '')
+                }
+                batch.put_item(Item=item)
+
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'worksheet_code': code, 'questions': questions})
+        }
+
+    except Exception as e:
+        print("Error in lambda_handler:", str(e))
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': str(e)})
+        }
