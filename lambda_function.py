@@ -15,12 +15,10 @@ def call_openai(count, question_type, topic):
     # 프롬프트 조립
     prompt = (
         f"Generate {count} questions in Korean for elementary school students on the topic '{topic}'. "
-        # 객관식/단답형 지시(기존)
     )
     if question_type == "객관식":
-        prompt += "Make them multiple-choice with 4 options each (no labels like ①–⑤). "
-        # 정답 인덱스(0-based) 조정
         prompt += (
+            "Make them multiple-choice with 4 options each (no labels like ①–⑤). "
             "For multiple-choice, ensure the correct answer is never the first option; "
             "it should be uniformly among options 2, 3, or 4. "
         )
@@ -33,7 +31,7 @@ def call_openai(count, question_type, topic):
             "For the multiple-choice half, ensure correct answers are only options 2, 3, or 4. "
         )
 
-    # 분포 조정: 계산 80%, 문장제 20%
+    # 계산 80%, 문장제 20%
     prompt += (
         "Of the total questions, 80% should be pure arithmetic calculation problems "
         "and 20% should be short, two-line max sentence-form word problems. "
@@ -45,34 +43,62 @@ def call_openai(count, question_type, topic):
 
     # advice 요청 포함
     prompt += (
-        "Include a mix of calculation and word problems as above. "
+        "Include a one-line study tip (advice) for each question. "
         "Return a JSON array of objects with keys: "
         "number (int), stem (string), options (array of strings, if any), "
         "answerIndex (0-based) or answer (string) for short answers, "
-        "advice (string): a one-line study tip for each question."
+        "advice (string)."
     )
 
     payload = json.dumps({
         "model": "gpt-4o-mini",
         "messages": [
-            {"role":"system","content":"You are a helpful teacher."},
-            {"role":"user","content":prompt}
+            {"role": "system", "content": "You are a helpful teacher."},
+            {"role": "user",   "content": prompt}
         ],
         "temperature": 0.7
     })
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {OPENAI_KEY}'
+    }
+
+    conn.request("POST", "/v1/chat/completions", payload, headers)
+    res  = conn.getresponse()
+    body = res.read().decode()
+
+    if res.status != 200:
+        raise Exception(f"OpenAI API error {res.status}: {body}")
+
+    data = json.loads(body)
+    raw  = data["choices"][0]["message"]["content"]
+
+    # JSON 배열만 추출
+    s = raw.find('[')
+    e = raw.rfind(']')
+    if s < 0 or e < 0:
+        raise Exception(f"JSON parsing error: cannot find array delimiters\nRaw response:\n{raw}")
+
+    arr = json.loads(raw[s:e+1])
+
+    # 반환값 검증
+    if not isinstance(arr, list):
+        raise Exception(f"OpenAI response is not a list: {type(arr)}\nRaw response:\n{raw}")
+
+    return arr
+
 def lambda_handler(event, context):
     try:
-        body          = json.loads(event.get('body','{}'))
+        body          = json.loads(event.get('body', '{}'))
         topic         = body['topic']
-        count         = int(body.get('count',10))
-        question_type = body.get('type','객관식')
+        count         = int(body.get('count', 10))
+        question_type = body.get('type', '객관식')
         code          = context.aws_request_id[:8]
 
         questions = call_openai(count, question_type, topic)
 
         with table.batch_writer() as batch:
             for q in questions:
-                # 객관식·단답형 모두 'answer' 필드에 저장
                 if 'answerIndex' in q:
                     answer_value = q['answerIndex'] + 1
                 else:
@@ -84,21 +110,21 @@ def lambda_handler(event, context):
                     'question'       : q['stem'],
                     'options'        : q.get('options', []),
                     'answer'         : answer_value,
-                    # advice 필드 추가
                     'advice'         : q.get('advice', '')
                 }
                 batch.put_item(Item=item)
 
         return {
             'statusCode': 200,
-            'headers': {'Content-Type':'application/json'},
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({'worksheet_code': code, 'questions': questions})
         }
 
     except Exception as e:
-        print("Error:", str(e))
+        # 에러 로그 남기기
+        print("Error in lambda_handler:", str(e))
         return {
             'statusCode': 500,
-            'headers': {'Content-Type':'application/json'},
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({'error': str(e)})
         }
