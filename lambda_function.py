@@ -12,10 +12,12 @@ table    = dynamodb.Table(DYNAMODB_TABLE)
 def call_openai(count, question_type, topic):
     conn = http.client.HTTPSConnection("api.openai.com")
 
-    # 프롬프트 조립
+    # 프롬프트 조립 시작
     prompt = (
         f"Generate {count} questions in Korean for elementary school students on the topic '{topic}'. "
     )
+
+    # 객관식/단답형 지시
     if question_type == "객관식":
         prompt += (
             "Make them multiple-choice with 4 options each (no labels like ①–⑤). "
@@ -31,14 +33,21 @@ def call_openai(count, question_type, topic):
             "For the multiple-choice half, ensure correct answers are only options 2, 3, or 4. "
         )
 
-    # 계산 80%, 문장제 20%
+    # 계산 80%, 문장제 20% 비율
     prompt += (
         "Of the total questions, 80% should be pure arithmetic calculation problems "
         "and 20% should be short, two-line max sentence-form word problems. "
-        "Word problem examples:\n"
+    )
+
+    # 문장제 형식 예시 (형식 참고용, 실제 문제는 '{topic}'에 맞춰 생성)
+    prompt += (
+        "Use the following as word-problem style examples, but adapt each to the selected topic "
+        f"('{topic}'), and do not copy them verbatim:\n"
         "- 예서는 오전에 딸기를 232개, 오후에는 143개 땄습니다. 예서가 딴 딸기는 모두 몇 개 인가요?\n"
         "- 오징어 20마리를 4개의 봉지에 똑같이 나누어 담으면 한 봉지에 몇 마리씩 담을 수 있나요?\n"
         "- 채원이는 한 박스에 플라스틱병을 16개씩 담았습니다. 4박스를 가득 담았다면 플라스틱병은 총 몇개 인가요?\n"
+        "Each new word problem must follow that concise two-line style but use numbers "
+        f"and contexts relevant to '{topic}'. "
     )
 
     # advice 요청 포함
@@ -49,7 +58,7 @@ def call_openai(count, question_type, topic):
         "answerIndex (0-based) or answer (string) for short answers, "
         "advice (string)."
     )
-
+    
     payload = json.dumps({
         "model": "gpt-4o-mini",
         "messages": [
