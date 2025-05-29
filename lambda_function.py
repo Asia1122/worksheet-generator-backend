@@ -21,8 +21,8 @@ def call_openai(count, question_type, topic):
     if question_type == "객관식":
         prompt += (
             "Make them multiple-choice with 4 options each (no labels like ①–⑤). "
-            "For multiple-choice, ensure the correct answer is never the first option; "
-            "it should be uniformly among options 2, 3, or 4. "
+            "Always place the correct answer in option 2, 3, or 4 (never in option 1), "
+            "and distribute correct answers uniformly among those positions. "
         )
     elif question_type == "단답형":
         prompt += "Make them short-answer questions (no options). "
@@ -30,7 +30,8 @@ def call_openai(count, question_type, topic):
         prompt += (
             "Make half multiple-choice with 4 options each (no labels) "
             "and half short-answer questions. "
-            "For the multiple-choice half, ensure correct answers are only options 2, 3, or 4. "
+            "For the multiple-choice half, always place the correct answer in option 2, 3, or 4 "
+            "(never in option 1), distributing them evenly. "
         )
 
     # 계산 80%, 문장제 20% 비율
