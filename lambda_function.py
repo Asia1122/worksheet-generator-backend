@@ -21,8 +21,10 @@ def call_openai(count, question_type, topic):
     # 2) 객관식/단답형 옵션
     if question_type == "객관식":
         prompt += (
-            "For calculation or word problems, provide 4 options each (no labels like ①–⑤) "
-            "and ensure the correct answer is always in option 2, 3, or 4. "
+            "For calculation or word problems, provide 4 options each. "
+            "Ensure all four options are distinct. "
+            "Always place the correct answer in option 2, 3, or 4 (never option 1), "
+            "and distribute correct answers evenly among positions 2, 3, and 4. "
         )
     else:
         prompt += "Do not include any options (short-answer style). "
