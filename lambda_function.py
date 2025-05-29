@@ -15,40 +15,46 @@ def call_openai(count, question_type, topic):
     # 1) 기본 설명
     prompt = (
         f"Generate {count} questions in Korean for elementary school students on the topic '{topic}'. "
-        "Questions should be either pure calculation or sentence-form word problems. "
+        "Questions should be either pure calculation or concise (max two-line) sentence-form word problems. "
     )
 
-    # 2) 객관식/단답형 옵션
+    # 2) 객관식, 단답형, 반반 옵션 처리
     if question_type == "객관식":
         prompt += (
-            "For calculation or word problems, provide 4 options each. "
-            "Ensure all four options are distinct. "
-            "Always place the correct answer in option 2, 3, or 4 (never option 1), "
-            "and distribute correct answers evenly among positions 2, 3, and 4. "
+            "Provide 4 distinct options for each question (no labels like ①–⑤). "
+            "The correct answer should never be option 1. "
+            "Aim for ~30% of correct answers in option 2, ~30% in option 3, and ~40% in option 4. "
         )
-    else:
+    elif question_type == "단답형":
         prompt += "Do not include any options (short-answer style). "
+    else:  # 반반
+        prompt += (
+            "For half of the questions, provide multiple-choice with 4 distinct options each, "
+            "ensuring the correct answer is never option 1 and distributed ~30% option 2, ~30% option 3, ~40% option 4. "
+            "For the other half, use short-answer style (no options). "
+        )
 
-    # 3) 비율 지정: 계산 80%, 문장제 20%
+    # 3) 계산·문장제 비율
     prompt += (
-        "Make 80% of the questions pure calculation format (e.g., “30 x 4 = ?”, “125 + 354를 구하세요.”) "
-        "and 20% sentence-form word problems. "
+        "Make 80% of the total questions in pure calculation format "
+        "(e.g., “30 x 4 = ?”, “125 + 354를 구하세요.”) "
+        "and 20% as sentence-form word problems. "
     )
 
-    # 4) 문장제 형식 예시—형식 참고용, 실제 문제는 반드시 '{topic}' 관련으로 생성
+    # 4) 문장제 형식 예시 (형식 참고용, 반드시 '{topic}' 관련으로 생성)
     prompt += (
-        "Use these as style examples but adapt each to the selected topic and do not copy them verbatim:\n"
+        "Here are style examples (do not copy verbatim):\n"
         "- 예서는 오전에 딸기를 232개, 오후에는 143개 땄습니다. 예서가 딴 딸기는 모두 몇 개 인가요?\n"
         "- 오징어 20마리를 4개의 봉지에 똑같이 나누어 담으면 한 봉지에 몇 마리씩 담을 수 있나요?\n"
         "- 채원이는 한 박스에 플라스틱병을 16개씩 담았습니다. 4박스를 가득 담았다면 총 몇 개인가요?\n"
-        f"Each new word problem must be concise (max two lines) and use numbers/contexts that reflect '{topic}'. "
+        f"Each new word problem must be concise and use numbers/contexts that reflect the topic '{topic}'. "
     )
 
-    # 5) 조언(advice) 지시
+    # 5) 조언 포함 및 출력 형식 지시
     prompt += (
-        "For each question, include a one-line advice that specifically helps solve that exact question. "
+        "Include a one-line advice for each question that helps solve exactly that question. "
         "Return a JSON array of objects with keys: "
-        "number (int), stem (string), options (array of strings if any), "
+        "number (int), stem (string), options (array of strings, if any), "
         "answerIndex (0-based) or answer (string), advice (string)."
     )
 
