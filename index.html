@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>학습지 생성기</title>
+  <!-- 구글 폰트 로드 -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html, body { height: 100%; }
@@ -44,72 +46,100 @@
       display: flex;
       flex-direction: column;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid #d1d5db;
+      /* 구분선 대신 부드러운 라인 */
+      border-bottom: 1px dashed #d1d5db;
       gap: 0.25rem;
     }
     .title-wrap { text-align: center; }
-    .title-wrap h2 { margin: 0; font-size: 18pt; font-weight: bold; }
+    .title-wrap h2 {
+      margin: 0;
+      font-size: 20pt;
+      font-weight: bold;
+      font-family: 'Comic Neue', cursive;
+      color: #5B21B6;
+    }
     .header-row { display: flex; justify-content: space-between; align-items: baseline; }
-    .header-row .code { font-size: 14pt; text-align: left; }
+    .header-row .code { font-size: 14pt; text-align: left; font-family: 'Comic Neue', cursive; color: #1E40AF; }
     .header-row .info { display: flex; align-items: center; font-size: 12pt; gap: 2rem; }
-    .header-row .info div { white-space: pre; margin: 0; }
+    .header-row .info div { white-space: pre; margin: 0; font-family: 'Comic Neue', cursive; color: #065F46; }
 
     .page-content {
       flex: 1 1 auto;
       display: grid;
       grid-template-columns: repeat(2,1fr);
       grid-template-rows: repeat(5,1fr);
-      gap: 2px;
+      gap: 8px;
       margin-top: 0.5rem;
     }
 
-    /* 각 셀 */
+    /* 각 셀: 투명 테두리 -> 배경으로 구분 */
     .cell {
       box-sizing: border-box;
-      border: 1px solid #d1d5db;
+      border: none;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      border-radius: 8px;
+      background: #FEF3C7;
+      padding: 4px;
     }
     .question {
-      flex: 0 0 50%;
+      flex: 0 0 auto;
       padding: 0.5rem;
       font-size: clamp(10pt,2vw,14pt);
       line-height: 1.2;
-      border-bottom: 1px solid #d1d5db;
-      overflow: hidden;
+      background: #EFF6FF;
+      border: none;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
       margin: 0;
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
     }
+    .question .q-number {
+      font-family: 'Comic Neue', cursive;
+      font-weight: bold;
+      font-size: 14pt;
+      color: #DC2626;
+      margin-right: 8px;
+    }
+    .question .q-text { flex: 1; }
     .body-split { flex: 1; display: flex; overflow: hidden; }
     .options {
       flex: 2;
       padding: 0.5rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.25rem;
+      gap: 4px;
       list-style: none;
       margin: 0;
       font-size: 12pt;
       overflow-wrap: break-word;
       white-space: normal;
+      background: #D1FAE5;
+      border-bottom-left-radius: 8px;
     }
     .options li { display: flex; align-items: flex-start; letter-spacing: 1px; }
-    .options li::before { content: attr(data-label); margin-right: 4px; flex-shrink: 0; }
+    .options li::before { content: attr(data-label); margin-right: 6px; flex-shrink: 0; font-family: 'Comic Neue', cursive; font-weight: bold; color: #047857; }
     .answer-area {
       flex: 1;
       display: grid;
       grid-template-rows: auto 1fr;
-      border-left: 1px solid #d1d5db;
+      background: #E0F2FE;
+      border-bottom-right-radius: 8px;
+      padding: 0.5rem;
     }
     .answer-label {
       text-align: center;
       font-size: clamp(6pt,1vw,10pt);
-      padding: 0.5rem;
+      padding: 0;
       margin: 0;
-      border-bottom: 1px solid #d1d5db;
+      border: none;
+      font-family: 'Comic Neue', cursive;
+      color: #1E3A8A;
     }
-    .answer-input { padding: 0.5rem; }
+    .answer-input { padding-top: 0.25rem; }
     .loading { grid-column: 1 / -1; text-align: center; font-size: 12pt; color: #555; padding-top: 2rem; }
   </style>
 </head>
@@ -134,9 +164,9 @@
       <div class="header-row">
         <div class="code" id="page-code"></div>
         <div class="info">
-          <div> ______ 초등학교</div>
-          <div>번호: ____ </div>
-          <div>이름: ___________</div>
+          <div>       초등학교</div>
+          <div>번호:    </div>
+          <div>이름:        </div>
         </div>
       </div>
     </div>
@@ -201,7 +231,10 @@
         questions.forEach(q => {
           const cell = document.createElement('div'); cell.className = 'cell';
           const h    = document.createElement('div'); h.className = 'question';
-          h.textContent = `(${q.number}) ${q.stem}`;
+          // 번호와 텍스트 분리
+          const numSpan = document.createElement('span'); numSpan.className = 'q-number'; numSpan.textContent = q.number;
+          const textSpan = document.createElement('span'); textSpan.className = 'q-text'; textSpan.textContent = q.stem;
+          h.append(numSpan, textSpan);
           if (q.stem.length > 70) h.style.fontSize = '11pt';
           cell.append(h);
 
