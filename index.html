@@ -25,14 +25,29 @@
       box-sizing: border-box;
       width: 180mm;
       height: 267mm;
-      padding: 5mm;
+      padding: 8mm;
       background: #fff;
       margin: 1rem auto;
       display: flex;
       flex-direction: column;
-      /* 테두리 컬러 추가 */
-      border: 2px solid #3182ce;
+      /* 다색 테두리 */
+      border: 12px solid transparent;
+      border-image-source: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4);
+      border-image-slice: 1;
+      position: relative;
     }
+
+    /* 작은 꾸밈 그림 (꽃, 동물 이모지) */
+    .decor {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      opacity: 0.7;
+    }
+    .decor.top-left { top: 8px; left: 8px; }
+    .decor.top-right { top: 8px; right: 8px; }
+    .decor.bottom-left { bottom: 8px; left: 8px; }
+    .decor.bottom-right { bottom: 8px; right: 8px; }
 
     /* 헤더 */
     .page-header {
@@ -49,6 +64,15 @@
     .header-row .code { font-size: 14pt; text-align: left; }
     .header-row .info { display: flex; justify-content: flex-end; font-size: 14pt; gap: 2rem; }
     .header-row .info div { white-space: pre; margin: 0; }
+    /* 번호, 이름 입력 공간 추가 */
+    .info div input {
+      border: none;
+      border-bottom: 1px dashed #666;
+      width: 100px;
+      margin-left: 4px;
+      font-size: 14pt;
+      background: transparent;
+    }
 
     .page-content {
       flex: 1 1 auto;
@@ -105,13 +129,7 @@
       border-bottom: 1px solid #d1d5db;
     }
     .answer-input { padding: 0.5rem; }
-    .loading {
-      grid-column: 1 / -1;
-      text-align: center;
-      font-size: 12pt;
-      color: #555;
-      padding-top: 2rem;
-    }
+    .loading { grid-column: 1 / -1; text-align: center; font-size: 12pt; color: #555; padding-top: 2rem; }
   </style>
 </head>
 <body class="p-6">
@@ -119,54 +137,31 @@
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
     <form id="settings" class="grid gap-4 md:grid-cols-3">
-      <div>
-        <label for="grade" class="block mb-1">학년</label>
-        <select id="grade" class="w-full border rounded p-2">
-          <option value="3">3학년</option>
-        </select>
-      </div>
-      <div>
-        <label for="unit" class="block mb-1">단원</label>
-        <select id="unit" class="w-full border rounded p-2">
-          <option value="1단원">1단원</option>
-          <option value="2단원">2단원</option>
-          <option value="3단원">3단원</option>
-          <option value="4단원">4단원</option>
-          <option value="5단원">5단원</option>
-          <option value="6단원">6단원</option>
-        </select>
-      </div>
-      <div>
-        <label for="topic" class="block mb-1">학습 주제</label>
-        <select id="topic" class="w-full border rounded p-2"></select>
-      </div>
-      <div>
-        <label for="count" class="block mb-1">문항 수 (1–10)</label>
-        <input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/>
-      </div>
-      <div>
-        <label for="qtype" class="block mb-1">문항 유형</label>
-        <select id="qtype" class="w-full border rounded p-2">
-          <option value="객관식">객관식</option>
-          <option value="단답형">단답형</option>
-          <option value="반반">반반</option>
-        </select>
-      </div>
+      <div><label for="grade" class="block mb-1">학년</label><select id="grade" class="w-full border rounded p-2"><option value="3">3학년</option></select></div>
+      <div><label for="unit" class="block mb-1">단원</label><select id="unit" class="w-full border rounded p-2"><option value="1단원">1단원</option><option value="2단원">2단원</option><option value="3단원">3단원</option><option value="4단원">4단원</option><option value="5단원">5단원</option><option value="6단원">6단원</option></select></div>
+      <div><label for="topic" class="block mb-1">학습 주제</label><select id="topic" class="w-full border rounded p-2"></select></div>
+      <div><label for="count" class="block mb-1">문항 수 (1–10)</label><input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/></div>
+      <div><label for="qtype" class="block mb-1">문항 유형</label><select id="qtype" class="w-full border rounded p-2"><option value="객관식">객관식</option><option value="단답형">단답형</option><option value="반반">반반</option></select></div>
       <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">학습지 생성</button>
     </form>
   </div>
 
   <!-- 학습지 페이지 -->
   <div class="page">
+    <!-- 꾸밈 그림 -->
+    <div class="decor top-left">🌸</div>
+    <div class="decor top-right">🦊</div>
+    <div class="decor bottom-left">🐰</div>
+    <div class="decor bottom-right">🌼</div>
+
     <div class="page-header">
-      <div class="title-wrap">
-        <h2 id="page-title">학습지</h2>
-      </div>
+      <div class="title-wrap"><h2 id="page-title">학습지</h2></div>
       <div class="header-row">
         <div class="code" id="page-code"></div>
         <div class="info">
-          <div>초등학교 번호:</div>
-          <div>이름:</div>
+          <div>초등학교: <input type="text"/></div>
+          <div>번호: <input type="text"/></div>
+          <div>이름: <input type="text"/></div>
         </div>
       </div>
     </div>
@@ -184,15 +179,11 @@
       '6단원': ['분수 비교','소수 비교']
     };
 
-    const unitEl = document.getElementById('unit'),
-          topicEl = document.getElementById('topic');
-
+    const unitEl = document.getElementById('unit'), topicEl = document.getElementById('topic');
     unitEl.addEventListener('change', () => {
       topicEl.innerHTML = '';
       (topicsMap[unitEl.value] || []).forEach(t => {
-        const o = document.createElement('option');
-        o.value = t; o.textContent = t;
-        topicEl.append(o);
+        const o = document.createElement('option'); o.value = t; o.textContent = t; topicEl.append(o);
       });
     });
     window.addEventListener('DOMContentLoaded', () => unitEl.dispatchEvent(new Event('change')));
@@ -239,7 +230,7 @@
           if (q.stem.length > 70) h.style.fontSize = '11pt';
           cell.append(h);
 
-          const b = document.createElement('div'); b.className = 'body-split';
+          const b    = document.createElement('div'); b.className = 'body-split';
           const opts = document.createElement('ul'); opts.className = 'options';
           (q.options || []).forEach((o, i) => {
             const li = document.createElement('li');
