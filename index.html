@@ -37,22 +37,6 @@
       position: relative;
     }
 
-    /* 작은 꾸밈 그림 (꽃, 동물 이모지) */
-    .decor {
-      position: absolute;
-      width: 28px;
-      height: 28px;
-      opacity: 0.8;
-    }
-    .decor.top-left { top: 6px; left: 6px; }
-    .decor.top-center { top: 6px; left: 50%; transform: translateX(-50%); }
-    .decor.top-right { top: 6px; right: 6px; }
-    .decor.middle-left { top: 50%; left: 6px; transform: translateY(-50%); }
-    .decor.middle-right { top: 50%; right: 6px; transform: translateY(-50%); }
-    .decor.bottom-left { bottom: 6px; left: 6px; }
-    .decor.bottom-center { bottom: 6px; left: 50%; transform: translateX(-50%); }
-    .decor.bottom-right { bottom: 6px; right: 6px; }
-
     /* 헤더 */
     .page-header {
       flex: 0 0 auto;
@@ -66,17 +50,9 @@
     .title-wrap h2 { margin: 0; font-size: 18pt; font-weight: bold; }
     .header-row { display: flex; justify-content: space-between; align-items: baseline; }
     .header-row .code { font-size: 14pt; text-align: left; }
-    .header-row .info { display: flex; align-items: center; font-size: 12pt; gap: 1.5rem; }
-    .header-row .info label { display: flex; align-items: center; gap: 4px; }
-    .header-row .info input {
-      border: none;
-      border-bottom: 1px dashed #666;
-      font-size: 12pt;
-      width: 120px;
-      background: transparent;
-      padding: 0;
-      margin: 0;
-    }
+    .header-row .info { display: flex; align-items: center; font-size: 12pt; gap: 2rem; }
+
+    .header-row .info div { white-space: pre; margin: 0; }
 
     .page-content {
       flex: 1 1 auto;
@@ -152,24 +128,14 @@
 
   <!-- 학습지 페이지 -->
   <div class="page">
-    <!-- 꾸밈 그림 추가 -->
-    <div class="decor top-left">🌸</div>
-    <div class="decor top-center">🐝</div>
-    <div class="decor top-right">🦊</div>
-    <div class="decor middle-left">🐥</div>
-    <div class="decor middle-right">🐱</div>
-    <div class="decor bottom-left">🐰</div>
-    <div class="decor bottom-center">🌼</div>
-    <div class="decor bottom-right">🦋</div>
-
     <div class="page-header">
       <div class="title-wrap"><h2 id="page-title">학습지</h2></div>
       <div class="header-row">
         <div class="code" id="page-code"></div>
         <div class="info">
-          <label>초등학교 <input type="text" placeholder="학교 명"></label>
-          <label>번호 <input type="text" placeholder="번호"></label>
-          <label>이름 <input type="text" placeholder="이름"></label>
+          <div>       초등학교</div>
+          <div>번호:    </div>
+          <div>이름:        </div>
         </div>
       </div>
     </div>
