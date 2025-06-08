@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>학습지 생성기</title>
-  <!-- 웹 안전용 귀여운 폰트: Comic Sans MS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html, body { height: 100%; }
@@ -39,149 +38,203 @@
       position: relative;
     }
 
-    /* 상단 곡선 배경 */
+    /* 헤더 */
     .page-header {
-      position: relative;
       flex: 0 0 auto;
       display: flex;
       flex-direction: column;
       padding-bottom: 0.5rem;
+      border-bottom: 1px solid #d1d5db;
       gap: 0.25rem;
-      overflow: hidden;
     }
-    .page-header::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 10%;
-      background: #ADE8F4;
-      border-bottom-left-radius: 50% 20%;
-      border-bottom-right-radius: 50% 20%;
-      z-index: -1;
-    }
-
     .title-wrap { text-align: center; }
-    .title-wrap h2 {
-      margin: 0;
-      font-size: 20pt;
-      font-weight: bold;
-      font-family: 'Comic Sans MS', cursive;
-      color: #5B21B6;
-    }
+    .title-wrap h2 { margin: 0; font-size: 18pt; font-weight: bold; }
     .header-row { display: flex; justify-content: space-between; align-items: baseline; }
-    .header-row .code {
-      font-size: 14pt;
-      text-align: left;
-      font-family: 'Comic Sans MS', cursive;
-      color: #1E40AF;
-    }
+    .header-row .code { font-size: 14pt; text-align: left; }
     .header-row .info { display: flex; align-items: center; font-size: 12pt; gap: 2rem; }
-    .header-row .info div { white-space: pre; margin: 0; font-family: 'Comic Sans MS', cursive; color: #065F46; }
+    .header-row .info div { white-space: pre; margin: 0; }
 
     .page-content {
       flex: 1 1 auto;
       display: grid;
       grid-template-columns: repeat(2,1fr);
       grid-template-rows: repeat(5,1fr);
-      gap: 8px;
+      gap: 2px;
       margin-top: 0.5rem;
     }
 
-    /* 셀 전체 투명 테두리 */
+    /* 각 셀 */
     .cell {
       box-sizing: border-box;
-      border: none;
+      border: 1px solid #d1d5db;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      border-radius: 8px;
-      background: #FEF3C7;
-      padding: 0;
     }
     .question {
-      flex: 0 0 auto;
+      flex: 0 0 50%;
       padding: 0.5rem;
       font-size: clamp(10pt,2vw,14pt);
       line-height: 1.2;
-      background: #EFF6FF;
-      border: none;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
+      border-bottom: 1px solid #d1d5db;
+      overflow: hidden;
       margin: 0;
-      display: flex;
-      align-items: center;
+      letter-spacing: 1px;
     }
-    /* 번호 스타일 업데이트 */
-    .question .q-number {
-      font-family: 'Comic Sans MS', cursive;
-      font-weight: bold;
-      font-size: 16pt;
-      color: #DC2626;
-      margin-right: 8px;
-    }
-    .question .q-text { flex: 1; letter-spacing: 1px; }
-
     .body-split { flex: 1; display: flex; overflow: hidden; }
-
     .options {
       flex: 2;
       padding: 0.5rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 4px;
+      gap: 0.25rem;
       list-style: none;
       margin: 0;
       font-size: 12pt;
       overflow-wrap: break-word;
       white-space: normal;
-      background: #D1FAE5;
-      border-bottom-left-radius: 8px;
     }
     .options li { display: flex; align-items: flex-start; letter-spacing: 1px; }
-    /* 옵션 테두리 투명 유지 */
-
+    .options li::before { content: attr(data-label); margin-right: 4px; flex-shrink: 0; }
     .answer-area {
       flex: 1;
       display: grid;
       grid-template-rows: auto 1fr;
-      background: #E0F2FE;
-      border-bottom-right-radius: 8px;
-      padding: 0.5rem;
-      /* 정답 칸 테두리 */
-      border: 2px solid #ADE8F4;
+      border-left: 1px solid #d1d5db;
     }
     .answer-label {
       text-align: center;
       font-size: clamp(6pt,1vw,10pt);
-      padding: 0;
+      padding: 0.5rem;
       margin: 0;
-      border: none;
-      font-family: 'Comic Sans MS', cursive;
-      color: #1E3A8A;
+      border-bottom: 1px solid #d1d5db;
     }
-    .answer-input { padding-top: 0.25rem; }
+    .answer-input { padding: 0.5rem; }
     .loading { grid-column: 1 / -1; text-align: center; font-size: 12pt; color: #555; padding-top: 2rem; }
   </style>
 </head>
 <body>
+  <!-- 컨트롤 패널 -->
   <div id="controls">
     <h1 class="text-2xl font-bold mb-4">학습지 생성기</h1>
-    <!-- form 생략 -->
+    <form id="settings" class="grid gap-4 md:grid-cols-3">
+      <div><label for="grade" class="block mb-1">학년</label><select id="grade" class="w-full border rounded p-2"><option value="3">3학년</option></select></div>
+      <div><label for="unit" class="block mb-1">단원</label><select id="unit" class="w-full border rounded p-2"><option value="1단원">1단원</option><option value="2단원">2단원</option><option value="3단원">3단원</option><option value="4단원">4단원</option><option value="5단원">5단원</option><option value="6단원">6단원</option></select></div>
+      <div><label for="topic" class="block mb-1">학습 주제</label><select id="topic" class="w-full border rounded p-2"></select></div>
+      <div><label for="count" class="block mb-1">문항 수 (1–10)</label><input id="count" type="number" min="1" max="10" value="10" class="w-full border rounded p-2"/></div>
+      <div><label for="qtype" class="block mb-1">문항 유형</label><select id="qtype" class="w-full border rounded p-2"><option value="객관식">객관식</option><option value="단답형">단답형</option><option value="반반">반반</option></select></div>
+      <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded">학습지 생성</button>
+    </form>
   </div>
+
+  <!-- 학습지 페이지 -->
   <div class="page">
     <div class="page-header">
       <div class="title-wrap"><h2 id="page-title">학습지</h2></div>
       <div class="header-row">
         <div class="code" id="page-code"></div>
         <div class="info">
-          <div>       초등학교</div>
-          <div>번호:    </div>
-          <div>이름:        </div>
+          <div> ______ 초등학교</div>
+          <div>번호: ____ </div>
+          <div>이름: ___________</div>
         </div>
       </div>
     </div>
     <div class="page-content" id="page-content"></div>
   </div>
-  <!-- 스크립트 생략 -->
+
+  <script>
+    const API_URL = 'https://j9t4iimykb.execute-api.ap-northeast-2.amazonaws.com/generate';
+    const topicsMap = {
+      '1단원': ['세 자리 수의 덧셈','세 자리 수의 뺄셈'],
+      '2단원': ['직각 삼각형','직사각형','정사각형'],
+      '3단원': ['두 자릿 수 ÷ 한 자릿 수'],
+      '4단원': ['(몇 십) × (몇)','(몇십몇) × (몇)'],
+      '5단원': ['시간의 덧셈','시간의 뺄셈'],
+      '6단원': ['분수 비교','소수 비교']
+    };
+
+    const unitEl = document.getElementById('unit'), topicEl = document.getElementById('topic');
+    unitEl.addEventListener('change', () => {
+      topicEl.innerHTML = '';
+      (topicsMap[unitEl.value] || []).forEach(t => {
+        const o = document.createElement('option'); o.value = t; o.textContent = t; topicEl.append(o);
+      });
+    });
+    window.addEventListener('DOMContentLoaded', () => unitEl.dispatchEvent(new Event('change')));
+
+    async function shrinkFonts(selector, minSize = 8) {
+      document.querySelectorAll(selector).forEach(el => {
+        let fs = parseFloat(window.getComputedStyle(el).fontSize);
+        while ((el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) && fs > minSize) {
+          fs -= 1;
+          el.style.fontSize = fs + 'px';
+        }
+      });
+    }
+
+    document.getElementById('settings').addEventListener('submit', async e => {
+      e.preventDefault();
+      const grade = document.getElementById('grade').value;
+      const unit  = unitEl.value;
+      const topic = topicEl.value;
+      const count = +document.getElementById('count').value;
+      const type  = document.getElementById('qtype').value;
+
+      document.getElementById('page-title').textContent = `${grade}학년 ${unit} - ${topic}`;
+      document.getElementById('page-code').textContent = '';
+      const content = document.getElementById('page-content');
+      content.innerHTML = '<div class="loading">문제 생성 중입니다…</div>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grade, unit, topic, count, type, includeAdvice: true })
+        });
+        if (!res.ok) throw new Error(res.status);
+        const { worksheet_code, questions } = await res.json();
+
+        document.getElementById('page-code').textContent = worksheet_code;
+        content.innerHTML = '';
+
+        questions.forEach(q => {
+          const cell = document.createElement('div'); cell.className = 'cell';
+          const h    = document.createElement('div'); h.className = 'question';
+          h.textContent = `(${q.number}) ${q.stem}`;
+          if (q.stem.length > 70) h.style.fontSize = '11pt';
+          cell.append(h);
+
+          const b    = document.createElement('div'); b.className = 'body-split';
+          const opts = document.createElement('ul'); opts.className = 'options';
+          (q.options || []).forEach((o, i) => {
+            const li = document.createElement('li');
+            li.setAttribute('data-label', ['①','②','③','④'][i]);
+            li.textContent = o; opts.append(li);
+          });
+          b.append(opts);
+
+          const a  = document.createElement('div'); a.className = 'answer-area';
+          const al = document.createElement('div'); al.className = 'answer-label'; al.textContent = '정답';
+          const ai = document.createElement('div'); ai.className = 'answer-input';
+          ai.textContent = (q.options && q.options.length > 0) ? q.answer : '';
+          a.append(al, ai); b.append(a);
+
+          cell.append(b); content.append(cell);
+        });
+
+        await shrinkFonts('.options', 8);
+        await shrinkFonts('.question', 8);
+
+        await fetch('/api/saveWorksheet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ worksheet_code, questions })
+        });
+      } catch(err) {
+        alert('문제 생성 실패: ' + err.message);
+      }
+    });
+  </script>
 </body>
 </html>
